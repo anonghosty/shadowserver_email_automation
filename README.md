@@ -1,4 +1,4 @@
-# Shadowserver Report Ingestion & Intelligence Framework
+# Shadowserver Report Ingestion & Intelligence Toolkit
 
 **Author:** Ike Owuraku Amponsah\
 **LinkedIn:** [https://www.linkedin.com/in/iowuraku](https://www.linkedin.com/in/iowuraku)\
