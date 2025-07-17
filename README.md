@@ -183,7 +183,7 @@ Stores output in:
 MIT License (Modified - No Resale)
 
 ```
-MIT License (Modified - No Commercial Resale)
+MIT License (No Commercial Resale)
 
 Copyright (c) 2025 Ike Owuraku Amponsah
 
