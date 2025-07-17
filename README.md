@@ -63,12 +63,7 @@ sudo apt update && sudo apt install -y \
 ## Python Dependencies
 
 Install via pip:
-
-```bash
-pip3 install -r requirements.txt
-```
-
-```txt
+```Packages
 aiofiles
 aiohttp
 async-lru
