@@ -27,16 +27,13 @@ Key features include:
 MongoDB is required. See: [https://www.howtoforge.com/tutorial/install-mongodb-on-ubuntu/](https://www.howtoforge.com/tutorial/install-mongodb-on-ubuntu/)\
 Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/)
 
-```bash
+```Toolkit
 .
 ├── bootstrap_shadowserver_environment.py         # Sets up OS, pip, Chrome & ChromeDriver
 ├── install_python_and_run_bootstrap.sh           # Prepares system with Python3 & pip
 ├── generate_statistics_reported_from_shadowserver_unverified.py
 ├── get_shadowserver_report_types.py
 ├── shadow_server_data_analysis_system_builder_and_updater.py
-├── shadowserver_url_descriptions/                # Cached metadata from Shadowserver site
-├── statistical_data/                             # Daily per-org PDF/CSV reports
-├── reported_companies/                           # Normalized and enriched ingested reports
 ├── LICENSE                                       # MIT (Modified)
 ├── .env                                          # Configuration file
 └── README.md
