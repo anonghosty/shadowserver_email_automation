@@ -107,6 +107,12 @@ email_password="your_email_password"
 # Regex patterns for filename classification
 geo_csv_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)\\-ghana\\-geo_as\\d+\\.csv$"
 geo_csv_fallback_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)\\-\\d+\\-ghana\\-geo_as\\d+\\.csv$"
+
+#for rerence system
+reference_nomenclature="default-cert-stat-"
+
+#for CSIRT Name
+cert_name="default-cert"
 ```
 
 ---
