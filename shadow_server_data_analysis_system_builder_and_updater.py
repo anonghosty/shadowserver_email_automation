@@ -15,6 +15,7 @@ import imaplib
 import zipfile
 import tarfile
 import gzip
+import warnings
 import subprocess
 from io import StringIO
 from datetime import datetime
@@ -29,6 +30,7 @@ import colorama
 import pandas as pd
 from pymongo import MongoClient, InsertOne
 from pymongo.errors import BulkWriteError
+from pymongo.errors import OperationFailure
 from async_lru import alru_cache
 from colorama import Fore, Style
 from bs4 import BeautifulSoup
@@ -43,12 +45,19 @@ load_dotenv(dotenv_path=".env", override=True)
 timestamp_now = datetime.now().strftime("%Y-%m-%d_%H%M")
 log_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+
+
+
+
+
 # === MongoDB Config ===
 mongo_username = os.getenv("mongo_username")
 mongo_password = os.getenv("mongo_password")
 mongo_auth_source = os.getenv("mongo_auth_source", "admin")
 mongo_host = os.getenv("mongo_host", "127.0.0.1")
 mongo_port = int(os.getenv("mongo_port", 27017))
+target_user = mongo_username
+target_db = mongo_auth_source
 
 print("\n🔐 MongoDB Configuration:")
 print(f"  - Username       : {mongo_username}")
@@ -56,6 +65,62 @@ print(f"  - Password       : {'*' * len(mongo_password) if mongo_password else '
 print(f"  - Auth Source    : {mongo_auth_source}")
 print(f"  - Host           : {mongo_host}")
 print(f"  - Port           : {mongo_port}")
+
+#========= DB USER ROLES DIAGNOSTIC RUN ===========
+uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/?authSource={mongo_auth_source}"
+client = MongoClient(uri)
+admin_db = client[mongo_auth_source]
+
+try:
+    user_data = admin_db.command("usersInfo", {"user": target_user, "db": target_db})
+except OperationFailure as e:
+    print(f"❌ Could not fetch user info: {e}")
+    exit(1)
+
+if not user_data.get("users"):
+    print(f"❌ User '{target_user}' not found in DB '{target_db}'.")
+    exit(1)
+
+user_info = user_data["users"][0]
+current_roles = [r["role"] for r in user_info["roles"]]
+
+print(f"\n🔍 Current roles for {target_user}@{target_db}:")
+for role in current_roles:
+    print(f" - {role}")
+
+# === Define required baseline roles ===
+required_roles = ["readWriteAnyDatabase", "dbAdminAnyDatabase"]
+missing_roles = [role for role in required_roles if role not in current_roles]
+
+if missing_roles:
+    print("\n🚨 This appears to be the first run for user role diagnostics.")
+    print("The following essential roles are missing for full administrative scripting:")
+    for role in missing_roles:
+        print(f" - {role}@admin")
+
+    proceed = input("\nDo you want to grant these roles to the user now? (yes/no): ").strip().lower()
+    if proceed not in ["yes", "y"]:
+        print("❌ Operation cancelled by user.")
+    else:
+        try:
+            admin_db.command("grantRolesToUser", target_user, roles=[
+                {"role": role, "db": "admin"} for role in missing_roles
+            ])
+            print("\n✅ Roles successfully applied.")
+        except OperationFailure as e:
+            print(f"\n❌ Failed to update roles: {e}")
+            exit(1)
+
+        # Show updated roles
+        updated_info = admin_db.command("usersInfo", {"user": target_user, "db": target_db})["users"][0]
+        updated_roles = [r["role"] for r in updated_info["roles"]]
+
+        print(f"\n📜 Updated roles for {target_user}@{target_db}:")
+        for role in updated_roles:
+            print(f" - {role}")
+else:
+    print("\n✅ All required roles are already assigned. No changes needed.")
+
 
 # === Email Config ===
 mail_server = os.getenv("mail_server")
@@ -75,19 +140,23 @@ print("\n📁 Regex Patterns:")
 print(f"  - Raw Primary    : {raw_primary}")
 print(f"  - Raw Fallback   : {raw_fallback}")
 
-try:
-    GEO_CSV_PATTERN = re.compile(raw_primary.encode().decode("unicode_escape"))
-    print(f"  ✅ Compiled Primary Pattern: {GEO_CSV_PATTERN.pattern}")
-except re.error as e:
-    GEO_CSV_PATTERN = None
-    print(f"  ❌ Failed to compile primary pattern: {e}")
 
-try:
-    GEO_CSV_FALLBACK_PATTERN = re.compile(raw_fallback.encode().decode("unicode_escape"))
-    print(f"  ✅ Compiled Fallback Pattern: {GEO_CSV_FALLBACK_PATTERN.pattern}")
-except re.error as e:
-    GEO_CSV_FALLBACK_PATTERN = None
-    print(f"  ❌ Failed to compile fallback pattern: {e}")
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=DeprecationWarning)
+    try:
+        GEO_CSV_PATTERN = re.compile(raw_primary.encode().decode("unicode_escape"))
+        print(f"  ✅ Compiled Primary Pattern: {GEO_CSV_PATTERN.pattern}")
+    except re.error as e:
+        GEO_CSV_PATTERN = None
+        print(f"  ❌ Failed to compile primary pattern: {e}")
+
+    try:
+        GEO_CSV_FALLBACK_PATTERN = re.compile(raw_fallback.encode().decode("unicode_escape"))
+        print(f"  ✅ Compiled Fallback Pattern: {GEO_CSV_FALLBACK_PATTERN.pattern}")
+    except re.error as e:
+        GEO_CSV_FALLBACK_PATTERN = None
+        print(f"  ❌ Failed to compile fallback pattern: {e}")
+
 
 # Base directories
 root_directory = "shadowserver_analysis_system/sorted_companies_by_country"
@@ -1188,6 +1257,11 @@ async def main_sort_country_code_only(use_tracker=False, country_tracker_mode="m
 
 
 
+
+
+
+
+
 async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="manual"):
     print("\n[Service Sorter] Sorting shadowserver reports by service name using country map...")
 
@@ -1283,7 +1357,7 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             try:
                 geo_match = re.match(geo_csv_regex, filename)
                 if geo_match:
-                    print(f"[Service Sorter] Matched standard geo format (env pattern): {filename}")
+                    print(f"[Service Sorter] Matched standard geo format: {filename}")
                     return geo_match
             except re.error as e:
                 print(f"[Service Sorter] Invalid geo_csv_regex: {e}")
@@ -1301,11 +1375,11 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             pattern = os.getenv(pattern_key, "").strip('"')
 
             if enabled and pattern:
-                print(f"[Service Sorter] Trying anomaly pattern {i}: {pattern}")
+                print(f"[Service Sorter] Trying anomaly pattern category {i}: ")
                 try:
                     anomaly_match = re.match(pattern, filename)
                     if anomaly_match:
-                        print(f"[Service Sorter] Matched anomaly pattern {i}: {filename}")
+                        print(f"[Service Sorter] Matched anomaly pattern category {i}: {filename}")
                         return anomaly_match
                 except re.error as e:
                     print(f"[Service Sorter] Invalid regex in {pattern_key}: {e}")
@@ -1313,6 +1387,15 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
 
         print(f"[Service Sorter] No match for any known pattern: {filename}")
         return None
+
+
+
+
+
+
+
+
+
 
 
     try:
