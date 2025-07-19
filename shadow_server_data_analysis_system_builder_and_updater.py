@@ -1188,11 +1188,6 @@ async def main_sort_country_code_only(use_tracker=False, country_tracker_mode="m
 
 
 
-
-
-
-
-
 async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="manual"):
     print("\n[Service Sorter] Sorting shadowserver reports by service name using country map...")
 
@@ -1318,15 +1313,6 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
 
         print(f"[Service Sorter] No match for any known pattern: {filename}")
         return None
-
-
-
-
-
-
-
-
-
 
 
     try:
