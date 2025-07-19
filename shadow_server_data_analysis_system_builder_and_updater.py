@@ -126,11 +126,14 @@ else:
 mail_server = os.getenv("mail_server")
 email_address = os.getenv("email_address")
 password = os.getenv("email_password")
+imap_folder = os.getenv("imap_shadowserver_folder_or_email_processing_folder", "inbox").strip('"')
 
 print("\n📧 Email Configuration:")
-print(f"  - mail Host : {mail_server}")
-print(f"  - Email Address  : {email_address}")
-print(f"  - Email Password : {'*' * len(password) if password else 'None'}")
+print(f"  - Mail Host               : {mail_server}")
+print(f"  - Email Address           : {email_address}")
+print(f"  - Email Password          : {'*' * len(password) if password else 'None'}")
+print(f"  - IMAP Folder to Monitor  : {imap_folder}")
+
 
 # === Regex Patterns ===
 raw_primary = os.getenv("geo_csv_fallback_regex", "")
@@ -158,13 +161,34 @@ with warnings.catch_warnings():
         print(f"  ❌ Failed to compile fallback pattern: {e}")
 
 
+# Display Performance Settings (safe defaults)
+shadowserver_buffer_size = int(os.getenv("buffer_size", "1024"))
+shadowserver_flush_row_count_threshold = int(os.getenv("flush_row_count", "100"))
+shadowserver_tracker_update_batch_size = int(os.getenv("tracker_batch_size", "1000"))
+shadowserver_service_sorting_batch_size = int(os.getenv("service_sorting_batch_size", "1000"))
+shadowserver_knowledgebase_ingestion_file_batch_size = int(
+    os.getenv("number_of_files_ingested_into_knowledgebase_per_batch", "2000")
+)
+
+# Print configuration for performance-related settings
+print("\n📊 [Shadowserver Performance Configuration]")
+print(f"  • Buffer size for in-memory operations:                   {shadowserver_buffer_size}")
+print(f"  • Row count threshold before flush to disk:               {shadowserver_flush_row_count_threshold}")
+print(f"  • Tracker update batch size per cycle:                    {shadowserver_tracker_update_batch_size}")
+print(f"  • Batch size for categorizing and sorting services:       {shadowserver_service_sorting_batch_size}")
+print(f"  • File ingestion batch size for knowledgebase insertion:  {shadowserver_knowledgebase_ingestion_file_batch_size}\n")
+
+
+
 # Base directories
 root_directory = "shadowserver_analysis_system/sorted_companies_by_country"
 asn_map_path = "shadowserver_analysis_system/detected_companies/asn_org_map.csv"
 
-# Buffer and batch settings
-BUFFER_SIZE = 1024
-FLUSH_ROW_COUNT = 100  # Tune based on memory budget
+
+
+# ====== Future Plans  ======
+BUFFER_SIZE = int(os.getenv("buffer_size", "1024"))
+FLUSH_ROW_COUNT = int(os.getenv("flush_row_count", "100"))  # Tune based on memory budget
 
 # SSL Context for IMAP connections
 context = ssl.create_default_context()
@@ -345,7 +369,26 @@ async def main_email_ingestion():
         print("Connection established successfully.")
         imap.login(email_address, password)
         print("Logged in successfully.")
-        imap.select("inbox")
+
+        imap_folder = os.getenv("imap_shadowserver_folder_or_email_processing_folder", "INBOX").strip('"')
+
+        # List available mailboxes
+        status, mailboxes = imap.list()
+        if status != "OK":
+            print("[IMAP] Failed to retrieve folder list.")
+        else:
+            available_folders = [line.decode().split(' "/" ')[-1].strip('"') for line in mailboxes]
+
+            if imap_folder in available_folders:
+                imap.select(imap_folder)
+                print(f"[IMAP] Selected folder: {imap_folder}")
+            else:
+                print(f"[IMAP] Folder '{imap_folder}' not found. Available folders:")
+                for folder in available_folders:
+                    print(f"  - {folder}")
+    except imaplib.IMAP4.error as e:
+        print(f"[IMAP] Authentication or connection error: {e}")
+
 
         # === Fetch Emails ===
         status, email_ids = imap.uid('search', None, 'ALL')
@@ -1098,7 +1141,7 @@ async def sort_shadowserver_by_country(use_tracker=False, country_tracker_mode="
     print("\n[Country Sorter] Organising reported companies by ASN country code...")
 
     # === Tracker Mode Logic ===
-    BATCH_SIZE = 1000
+    BATCH_SIZE = int(os.getenv("tracker_batch_size", "1000"))
     tracker_dir = "file_tracking_system"
     country_tracker_path = os.path.join(tracker_dir, "country_sort_tracker.json")
 
@@ -1265,7 +1308,7 @@ async def main_sort_country_code_only(use_tracker=False, country_tracker_mode="m
 async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="manual"):
     print("\n[Service Sorter] Sorting shadowserver reports by service name using country map...")
 
-    BATCH_SIZE = 1000
+    BATCH_SIZE = int(os.getenv("service_sorting_batch_size", "1000"))
 
     asn_map_dir = os.path.join("shadowserver_analysis_system", "detected_companies")
     sorted_base = os.path.join("shadowserver_analysis_system", "sorted_companies_by_country")
@@ -1602,7 +1645,7 @@ async def main_shadowserver_knowledgebase_ingestion(
             file_path = os.path.join(root, filename)
             files_list.append(file_path)
 
-    FILE_BATCH_SIZE = 2000
+    FILE_BATCH_SIZE = int(os.getenv("number_of_files_ingested_into_knowledgebase_per_batch", "2000"))
     total_files_found = len(files_list)
 
     for batch_start in range(0, total_files_found, FILE_BATCH_SIZE):
@@ -1839,19 +1882,19 @@ async def main():
     print("\n🛠️  Selected Tasks:")
     for task in tasks:
         if task == "email":
-            print("• email   → Ingest Shadowserver emails and extract attachments")
+            print("• email   → Pull Emails Including Shadowserver  Reports, Save As EML and Extract Attachments")
         elif task == "refresh":
-            print("• refresh → Refresh ASN/WHOIS metadata from previous reports")
+            print("• refresh → Refresh Stored ASN/WHOIS Metadata from Previous Shadowserver Reports")
         elif task == "process":
-            print("• process → Parse and normalize Shadowserver CSV/JSON files")
+            print("• process → Parse and Normalize Shadowserver CSV/JSON files")
         elif task == "country":
-            print("• country → Sort processed reports by country code")
+            print("• country → Sort Processed Shadowserver Reports by Country Code")
         elif task == "service":
-            print("• service → Sort processed reports by detected service type")
+            print("• service → Sort Processed Shadowserver Reports by Detected Service Type via Filename Pattern Analysis")
         elif task == "ingest":
-            print("• ingest  → Ingest cleaned data into knowledgebase collections")
+            print("• ingest  → Ingest Cleaned Shadoverver Data into Knowledgebase as Databases and Collections")
         elif task == "all":
-            print("• all     → Run all tasks sequentially (email, refresh, process, country, service, ingest)")
+            print("• all     → Run All Tasks Sequentially (email, refresh, process, country, service, ingest)")
         else:
             print(f"❌ Unknown task '{task}' — valid options are: email, refresh, process, country, service, ingest, all")
             sys.exit(1)
