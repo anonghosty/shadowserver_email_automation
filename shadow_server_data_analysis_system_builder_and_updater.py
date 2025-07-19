@@ -1225,13 +1225,109 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
     else:
         service_tracker = {}
 
+
+    def validate_env_regex(key):
+        """
+        Validates that the regex pattern defined in the environment under `key`:
+        - Compiles successfully
+        - Has at least one capture group for .group(1) usage
+
+        Logs warnings or errors accordingly.
+        """
+        pattern = os.getenv(key, "").strip('"')
+
+        if not pattern:
+            return  # Nothing to validate
+
+        try:
+            compiled = re.compile(pattern)
+            if compiled.groups < 1:
+                print(f"[Warning] Pattern '{key}' has no capture group — .group(1) will fail.")
+        except re.error as e:
+            print(f"[Error] Invalid regex in '{key}': {e}")
+
+    # Validate standard and fallback regex patterns
+    validate_env_regex("GEO_CSV_REGEX")
+    validate_env_regex("geo_csv_fallback_regex")
+
+    # Validate anomaly patterns (only if ENABLE_ is true)
+    for i in range(1, 6):  # Adjust range based on your design
+        enabled_key = f"ENABLE_ANOMALY_PATTERN_{i}"
+        pattern_key = f"ANOMALY_PATTERN_{i}"
+
+        enabled = os.getenv(enabled_key, "false").strip('"').lower() == "true"
+
+        if enabled:
+            validate_env_regex(pattern_key)
+        else:
+            print(f"[Info] Skipping {pattern_key} — disabled or not set.")
+
+
     @alru_cache(maxsize=1024)
     async def match_service_name(filename):
-        if GEO_CSV_PATTERN and GEO_CSV_PATTERN.match(filename):
-            return "primary"
-        elif GEO_CSV_FALLBACK_PATTERN and GEO_CSV_FALLBACK_PATTERN.match(filename):
-            return "fallback"
+        # Step 1: Fallback pattern (reporting code removal)
+        fallback_regex = os.getenv("geo_csv_fallback_regex", "").strip('"')
+        if fallback_regex:
+            try:
+                match = re.match(fallback_regex, filename)
+                if match:
+                    reporting_code_match = re.search(r"-\d{3}", filename)
+                    if reporting_code_match:
+                        reporting_code = reporting_code_match.group(0)
+                        print(f"[Service Sorter] Reporting code detected: {reporting_code}")
+                        filename = filename.replace(reporting_code, "")
+                    print(f"[Service Sorter] Service name after removing reporting code: {filename}")
+            except re.error as e:
+                print(f"[Service Sorter] Invalid geo_csv_fallback_regex: {e}")
+        else:
+            print(f"[Service Sorter] No match for filename using fallback regex: {filename}")
+
+        # Step 2: Try GEO_CSV_REGEX (canonical format from .env)
+        geo_csv_regex = os.getenv("geo_csv_regex", "").strip('"')
+        if geo_csv_regex:
+            try:
+                geo_match = re.match(geo_csv_regex, filename)
+                if geo_match:
+                    print(f"[Service Sorter] Matched standard geo format (env pattern): {filename}")
+                    return geo_match
+            except re.error as e:
+                print(f"[Service Sorter] Invalid geo_csv_regex: {e}")
+
+        # Step 3: Try anomaly patterns incrementally
+        i = 1
+        while True:
+            enable_key = f"enable_anomaly_pattern_{i}"
+            pattern_key = f"anomaly_pattern_{i}"
+
+            if enable_key not in os.environ and pattern_key not in os.environ:
+                break
+
+            enabled = os.getenv(enable_key, "false").lower() == "true"
+            pattern = os.getenv(pattern_key, "").strip('"')
+
+            if enabled and pattern:
+                print(f"[Service Sorter] Trying anomaly pattern {i}: {pattern}")
+                try:
+                    anomaly_match = re.match(pattern, filename)
+                    if anomaly_match:
+                        print(f"[Service Sorter] Matched anomaly pattern {i}: {filename}")
+                        return anomaly_match
+                except re.error as e:
+                    print(f"[Service Sorter] Invalid regex in {pattern_key}: {e}")
+            i += 1
+
+        print(f"[Service Sorter] No match for any known pattern: {filename}")
         return None
+
+
+
+
+
+
+
+
+
+
 
     try:
         df = pd.read_csv(country_map_csv, dtype=str)
