@@ -136,10 +136,10 @@ print(f"  - IMAP Folder to Monitor  : {imap_folder}")
 
 
 # === Regex Patterns ===
-raw_primary = os.getenv("geo_csv_fallback_regex", "")
-raw_fallback = os.getenv("geo_csv_regex", "")
+raw_fallback = os.getenv("geo_csv_fallback_regex", "")
+raw_primary = os.getenv("geo_csv_regex", "")
 
-print("\n📁 Regex Patterns:")
+print("\n📁 Regex Patterns(Safety: Fallback Runs in Code First Before Primary to Detect Unique Codes:")
 print(f"  - Raw Primary    : {raw_primary}")
 print(f"  - Raw Fallback   : {raw_fallback}")
 
@@ -1282,12 +1282,6 @@ async def main_sort_country_code_only(use_tracker=False, country_tracker_mode="m
     await sort_shadowserver_by_country(use_tracker=use_tracker, country_tracker_mode=country_tracker_mode)
 
 
-
-
-
-
-
-
 async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="manual"):
     print("\n[Service Sorter] Sorting shadowserver reports by service name using country map...")
 
@@ -1345,8 +1339,11 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
     validate_env_regex("GEO_CSV_REGEX")
     validate_env_regex("geo_csv_fallback_regex")
 
-    # Validate anomaly patterns (only if ENABLE_ is true)
-    for i in range(1, 6):  # Adjust range based on your design
+    # Get the range value from .env
+    anomaly_pattern_count = int(os.getenv("anomaly_pattern_count", "0"))
+
+    # Loop based on that range
+    for i in range(1, anomaly_pattern_count + 1):
         enabled_key = f"enable_anomaly_pattern_{i}"
         pattern_key = f"anomaly_pattern_{i}"
 
@@ -1356,7 +1353,6 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             validate_env_regex(pattern_key)
         else:
             print(f"[Info] Skipping {pattern_key} — disabled or not set.")
-
 
 
     @alru_cache(maxsize=1024)
