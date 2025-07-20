@@ -139,6 +139,9 @@ geo_csv_fallback_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)(?:-\\d{3})?-<input_country_h
 # ====== Feature Spotlight: Anomaly Pattern Detection ======
 
 #=Special Detection In Case Of Issues---run just service flag to troubleshoot----
+#Increase the number of anomaly pattern checks
+anomaly_pattern_count=5
+
 #Real Life Scenarios
 # Anomaly patterns for Shadowserver consultationv -Blocked_IPs Report
 enable_anomaly_pattern_1="true"
