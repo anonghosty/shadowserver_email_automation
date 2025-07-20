@@ -369,25 +369,8 @@ async def main_email_ingestion():
         print("Connection established successfully.")
         imap.login(email_address, password)
         print("Logged in successfully.")
-
-        imap_folder = os.getenv("imap_shadowserver_folder_or_email_processing_folder", "INBOX").strip('"')
-
-        # List available mailboxes
-        status, mailboxes = imap.list()
-        if status != "OK":
-            print("[IMAP] Failed to retrieve folder list.")
-        else:
-            available_folders = [line.decode().split(' "/" ')[-1].strip('"') for line in mailboxes]
-
-            if imap_folder in available_folders:
-                imap.select(imap_folder)
-                print(f"[IMAP] Selected folder: {imap_folder}")
-            else:
-                print(f"[IMAP] Folder '{imap_folder}' not found. Available folders:")
-                for folder in available_folders:
-                    print(f"  - {folder}")
-    except imaplib.IMAP4.error as e:
-        print(f"[IMAP] Authentication or connection error: {e}")
+        imap_folder = os.getenv("imap_shadowserver_folder_or_email_processing_folder", "inbox").strip('"')
+        imap.select(imap_folder)
 
 
         # === Fetch Emails ===
@@ -1377,12 +1360,17 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
 
     @alru_cache(maxsize=1024)
     async def match_service_name(filename):
+        original_filename = filename  # Keep a reference in case needed
+        pattern_type = None
+        pattern_id = -1
+        service_name = None
+
         # Step 1: Fallback pattern (reporting code removal)
         fallback_regex = os.getenv("geo_csv_fallback_regex", "").strip('"')
         if fallback_regex:
             try:
-                match = re.match(fallback_regex, filename)
-                if match:
+                fallback_match = re.match(fallback_regex, filename)
+                if fallback_match:
                     reporting_code_match = re.search(r"-\d{3}", filename)
                     if reporting_code_match:
                         reporting_code = reporting_code_match.group(0)
@@ -1394,18 +1382,24 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
         else:
             print(f"[Service Sorter] No match for filename using fallback regex: {filename}")
 
-        # Step 2: Try GEO_CSV_REGEX (canonical format from .env)
+        # Step 2: GEO CSV standard regex
         geo_csv_regex = os.getenv("geo_csv_regex", "").strip('"')
         if geo_csv_regex:
             try:
                 geo_match = re.match(geo_csv_regex, filename)
                 if geo_match:
                     print(f"[Service Sorter] Matched standard geo format: {filename}")
-                    return geo_match
+                    return {
+                        "pattern_type": "geo",
+                        "pattern_id": 0,
+                        "service_name": geo_match.group(1),
+                        "match_obj": geo_match,
+                        "cleaned_filename": filename
+                    }
             except re.error as e:
                 print(f"[Service Sorter] Invalid geo_csv_regex: {e}")
 
-        # Step 3: Try anomaly patterns incrementally
+        # Step 3: Anomaly patterns
         i = 1
         while True:
             enable_key = f"enable_anomaly_pattern_{i}"
@@ -1418,18 +1412,31 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             pattern = os.getenv(pattern_key, "").strip('"')
 
             if enabled and pattern:
-                print(f"[Service Sorter] Trying anomaly pattern category {i}: ")
+                print(f"[Service Sorter] Trying anomaly pattern category {i}: {pattern}")
                 try:
                     anomaly_match = re.match(pattern, filename)
                     if anomaly_match:
                         print(f"[Service Sorter] Matched anomaly pattern category {i}: {filename}")
-                        return anomaly_match
+                        return {
+                            "pattern_type": f"anomaly_{i}",
+                            "pattern_id": i,
+                            "service_name": anomaly_match.group(1) if anomaly_match.re.groups >= 1 else None,
+                            "match_obj": anomaly_match,
+                            "cleaned_filename": filename
+                        }
                 except re.error as e:
                     print(f"[Service Sorter] Invalid regex in {pattern_key}: {e}")
             i += 1
 
         print(f"[Service Sorter] No match for any known pattern: {filename}")
-        return None
+        return {
+            "pattern_type": None,
+            "pattern_id": -1,
+            "service_name": None,
+            "match_obj": None,
+            "cleaned_filename": original_filename
+        }
+
 
 
 
@@ -1497,9 +1504,11 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
                     if not os.path.isfile(file_path):
                         continue
 
-                    match = await match_service_name(file)
-                    if match:
-                        service_name = match.group(1)
+                    result = await match_service_name(file)
+                    if result["service_name"]:
+                        service_name = result["service_name"]
+                        clean_name = result["cleaned_filename"]
+
                         service_folder = os.path.join(org_path, service_name)
                         ensure_dir(service_folder)
 
@@ -1538,6 +1547,7 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
 
     except Exception as e:
         print(f"[Service Sorter][ERROR] Failed to sort: {e}")
+        
 
 async def main_sort_service_only(use_tracker=False, service_tracker_mode="manual"):
     await sort_shadowserver_by_service(use_tracker=use_tracker, service_tracker_mode=service_tracker_mode)
