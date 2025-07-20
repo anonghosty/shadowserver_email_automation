@@ -1347,8 +1347,8 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
 
     # Validate anomaly patterns (only if ENABLE_ is true)
     for i in range(1, 6):  # Adjust range based on your design
-        enabled_key = f"ENABLE_ANOMALY_PATTERN_{i}"
-        pattern_key = f"ANOMALY_PATTERN_{i}"
+        enabled_key = f"enable_anomaly_pattern_{i}"
+        pattern_key = f"anomaly_pattern_{i}"
 
         enabled = os.getenv(enabled_key, "false").strip('"').lower() == "true"
 
@@ -1358,48 +1358,56 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             print(f"[Info] Skipping {pattern_key} — disabled or not set.")
 
 
+
     @alru_cache(maxsize=1024)
     async def match_service_name(filename):
-        original_filename = filename  # Keep a reference in case needed
-        pattern_type = None
-        pattern_id = -1
-        service_name = None
+        original_filename = filename
+        cleaned_filename = filename  # Might be updated after fallback cleanup
 
-        # Step 1: Fallback pattern (reporting code removal)
+        # Step 1: Attempt fallback regex
         fallback_regex = os.getenv("geo_csv_fallback_regex", "").strip('"')
         if fallback_regex:
             try:
                 fallback_match = re.match(fallback_regex, filename)
                 if fallback_match:
+                    print(f"[Service Sorter] Fallback pattern matched: {filename}")
                     reporting_code_match = re.search(r"-\d{3}", filename)
                     if reporting_code_match:
                         reporting_code = reporting_code_match.group(0)
                         print(f"[Service Sorter] Reporting code detected: {reporting_code}")
-                        filename = filename.replace(reporting_code, "")
-                    print(f"[Service Sorter] Service name after removing reporting code: {filename}")
+                        cleaned_filename = filename.replace(reporting_code, "")
+                        print(f"[Service Sorter] Cleaned filename after removing reporting code: {cleaned_filename}")
+                    else:
+                        print(f"[Service Sorter] No reporting code found, using fallback-matched filename as-is.")
+                else:
+                    print(f"[Service Sorter] Fallback regex did not match — skipping reporting code cleanup: {filename}")
             except re.error as e:
-                print(f"[Service Sorter] Invalid geo_csv_fallback_regex: {e}")
+                print(f"[Service Sorter] Invalid fallback regex: {e}")
         else:
-            print(f"[Service Sorter] No match for filename using fallback regex: {filename}")
+            print("[Service Sorter] No fallback regex defined.")
 
-        # Step 2: GEO CSV standard regex
+        # Step 2: Attempt standard GEO regex on cleaned filename
         geo_csv_regex = os.getenv("geo_csv_regex", "").strip('"')
         if geo_csv_regex:
             try:
-                geo_match = re.match(geo_csv_regex, filename)
+                geo_match = re.match(geo_csv_regex, cleaned_filename)
                 if geo_match:
-                    print(f"[Service Sorter] Matched standard geo format: {filename}")
+                    print(f"[Service Sorter] Matched standard GEO format: {cleaned_filename}")
                     return {
                         "pattern_type": "geo",
                         "pattern_id": 0,
                         "service_name": geo_match.group(1),
                         "match_obj": geo_match,
-                        "cleaned_filename": filename
+                        "cleaned_filename": cleaned_filename
                     }
+                else:
+                    print(f"[Service Sorter] GEO regex did not match: {cleaned_filename}")
             except re.error as e:
                 print(f"[Service Sorter] Invalid geo_csv_regex: {e}")
+        else:
+            print("[Service Sorter] No standard geo regex defined.")
 
-        # Step 3: Anomaly patterns
+        # Step 3: Try anomaly patterns
         i = 1
         while True:
             enable_key = f"enable_anomaly_pattern_{i}"
@@ -1412,23 +1420,23 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             pattern = os.getenv(pattern_key, "").strip('"')
 
             if enabled and pattern:
-                print(f"[Service Sorter] Trying anomaly pattern category {i}: {pattern}")
                 try:
-                    anomaly_match = re.match(pattern, filename)
+                    print(f"[Service Sorter] Trying anomaly pattern {i}: {pattern}")
+                    anomaly_match = re.match(pattern, cleaned_filename)
                     if anomaly_match:
-                        print(f"[Service Sorter] Matched anomaly pattern category {i}: {filename}")
+                        print(f"[Service Sorter] Matched anomaly pattern {i}: {cleaned_filename}")
                         return {
                             "pattern_type": f"anomaly_{i}",
                             "pattern_id": i,
                             "service_name": anomaly_match.group(1) if anomaly_match.re.groups >= 1 else None,
                             "match_obj": anomaly_match,
-                            "cleaned_filename": filename
+                            "cleaned_filename": cleaned_filename
                         }
                 except re.error as e:
                     print(f"[Service Sorter] Invalid regex in {pattern_key}: {e}")
             i += 1
 
-        print(f"[Service Sorter] No match for any known pattern: {filename}")
+        print(f"[Service Sorter] No known pattern matched: {original_filename}")
         return {
             "pattern_type": None,
             "pattern_id": -1,
@@ -1436,6 +1444,7 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
             "match_obj": None,
             "cleaned_filename": original_filename
         }
+
 
 
 
