@@ -148,6 +148,7 @@ anomaly_pattern_3="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>-geo\.csv$"
 
 enable_anomaly_pattern_4="false"
 anomaly_pattern_4=""
+```
 </details> ```
 
 ---
