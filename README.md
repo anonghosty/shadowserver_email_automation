@@ -84,27 +84,57 @@ python-dotenv
 Example `.env` file:
 
 ```dotenv
-# MongoDB connection
-mongo_username="your_user"
-mongo_password="your_pass"
-mongo_auth_source="admin"
+# MongoDB credentials
+mongo_username="anon"
+mongo_password="input password"
+mongo_auth_source="input auth source whethere 'admin'"
 mongo_host="127.0.0.1"
 mongo_port=27017
 
-# Email credentials
-imap_server="imap.example.com"
-email_address="alerts@example.com"
-email_password="your_email_password"
+# Email settings
+mail_server="mail.example.com"
+email_address="cookies@example.com"
+email_password="cookiesonthelu"
+imap_shadowserver_folder_or_email_processing_folder="INBOX"
 
-# Regex patterns for filename classification
-geo_csv_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)\\-ghana\\-geo_as\\d+\\.csv$"
-geo_csv_fallback_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)\\-\\d+\\-ghana\\-geo_as\\d+\\.csv$"
+advisory_prefix="default-cert-"
 
 #for rerence system
 reference_nomenclature="default-cert-stat-"
 
 #for CSIRT Name
-cert_name="default-cert"
+cert_name="DEFAULT-CERT"
+
+#====== Performance Settings ========
+buffer_size="1024"
+flush_row_count=100
+tracker_batch_size=1000
+service_sorting_batch_size=1000
+number_of_files_ingested_into_knowledgebase_per_batch= 2000
+
+#-----REGEX SECTION----(change "<input_country_here>" to country name in lowercase. You can use find and replace "<input_country_here>" )
+# Regex pattern for filename 
+geo_csv_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)-<input_country_here>-geo_as\\d+\\.csv$"
+
+geo_csv_fallback_regex = "^\\d{4}-\\d{2}-\\d{2}-(.*?)(?:-\\d{3})?-<input_country_here>_as\\d+\\.csv$"
+
+#NEW FEATURE!!! DING DING DING CHICKEN DINNER!!
+#-------Special Detection In Case Of Issues----------- run just service flag to troubleshoot-----------
+# Anomaly patterns for Shadowserver consultation
+enable_anomaly_pattern_1="true"
+anomaly_pattern_1="^\d{4}-\d{2}-\d{2}-(\d+)_as\d+\.csv$"
+
+#Detected government ASN naming at suffix
+enable_anomaly_pattern_2="true"
+anomaly_pattern_2="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>[_-][a-z0-9\-]*_as\d+\.csv$"
+
+#Ransomware Reports Service Sorting
+enable_anomaly_pattern_3="true"
+anomaly_pattern_3="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>-geo\.csv$"
+
+
+enable_anomaly_pattern_4="false"
+anomaly_pattern_4=""
 ```
 
 ---
@@ -132,9 +162,44 @@ This script will:
 ## Ingest Shadowserver Reports via IMAP
 
 ```bash
-python3 shadow_server_data_analysis_system_builder_and_updater.py [email|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]
-```
+Sequence: Really Important To Observe the sequence so you can build flavors in automation
 
++---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
+|  email  | --> | refresh | --> | process  | --> |  country  | --> |  service  | --> | ingest |
++---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
+     │              │               │                 │                 │               │
+     ▼              ▼               ▼                 ▼                 ▼               ▼
+ Pull Emails   Refresh ASN/    Normalize &     Sort by Country    Sort by Service   Ingest into
+ & Extract     WHOIS Info     Parse Reports     (ISO 3166-1)       (Report Type)   Knowledgebase
+Attachments
+
+
+python3 shadow_server_data_analysis_system_builder_and_updater.py [email|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]
+
+email   → Pull Emails Including Shadowserver Reports, Save as EML, and Extract Attachments  
+refresh → Refresh Stored ASN/WHOIS Metadata from Previous Shadowserver Reports  
+process → Parse and Normalize Shadowserver CSV/JSON Files  
+country → Sort Processed Reports by Country Code (based on IP WHOIS geolocation)  
+service → Sort Processed Reports by Detected Service Type (via Filename Pattern Analysis)  
+ingest  → Ingest Cleaned Shadowserver Data into the Knowledgebase (Databases & Collections)
+```
+### 🧭 Task Flow When Using `all`
+
+```text
+email   → Pull Emails and Extract Shadowserver Attachments
+   ↓
+refresh → Refresh Stored ASN/WHOIS Metadata
+   ↓
+process → Normalize and Parse Extracted CSV/JSON Reports
+   ↓
+country → Sort by IP Country Code (ISO 3166-1)
+   ↓
+service → Sort by Shadowserver Report Type Patterns
+   ↓
+ingest  → Ingest Parsed Data into Local/Cloud Knowledgebase (Mongodb Instance)
+
+
+```
 Examples:
 
 ```bash
@@ -146,6 +211,13 @@ python3 shadow_server_data_analysis_system_builder_and_updater.py all --tracker=
 
 # Only process downloaded reports without ingestion
 python3 shadow_server_data_analysis_system_builder_and_updater.py process --tracker-service=manual
+
+# select select a sequential combination flavor
+python3 shadow_server_data_analysis_system_builder_and_updater.py email process country service
+python3 shadow_server_data_analysis_system_builder_and_updater.py email refresh country service
+python3 shadow_server_data_analysis_system_builder_and_updater.py refresh country service ingest
+
+
 ```
 
 ---
