@@ -240,7 +240,18 @@ python3 shadow_server_data_analysis_system_builder_and_updater.py refresh countr
 
 
 ```
+---
 
+## Scrape Shadowserver Report Metadata (Run Before Report Generation)
+
+```bash
+python3 get_shadowserver_report_types.py
+```
+
+Stores output in:
+
+- HTML: `shadowserver_report_types_http_files/`
+- CSV: `shadowserver_url_descriptions/`
 ---
 
 ## Generate Statistics Per Organization
@@ -256,18 +267,6 @@ Outputs:
 - CSVs and PDFs under `statistical_data/<org>/`
 - ASN-category maps, IP prefixes, summary counts
 
----
-
-## Scrape Shadowserver Report Metadata
-
-```bash
-python3 get_shadowserver_report_types.py
-```
-
-Stores output in:
-
-- HTML: `shadowserver_report_types_http_files/`
-- CSV: `shadowserver_url_descriptions/`
 
 ---
 
