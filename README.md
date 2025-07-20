@@ -46,41 +46,29 @@ Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/instal
 ### OS-Level Dependencies (Ubuntu)
 
 ```bash
-1 python3 – Python interpreter
+| #  | Package              | Purpose                                                                  |
+| -- | -------------------- | ------------------------------------------------------------------------ |
+| 1  | `python3`            | Python interpreter for executing the application                         |
+| 2  | `python3-pip`        | Python package manager used to install dependencies                      |
+| 3  | `unzip`              | Utility for extracting `.zip` files                                      |
+| 4  | `zip`                | Utility for creating `.zip` archives                                     |
+| 5  | `p7zip-full`         | Full-featured 7-Zip tool for `.7z` archive extraction                    |
+| 6  | `p7zip-rar`          | Enables RAR archive support in 7-Zip                                     |
+| 7  | `unrar`              | Standalone utility for extracting `.rar` files                           |
+| 8  | `libnss3`            | Required security library for Chrome/Chromium (used by Selenium)         |
+| 9  | `libxss1`            | X11 Screen Saver extension (required for headless browser stability)     |
+| 10 | `libappindicator3-1` | Enables application indicators in headless browser environments          |
+| 11 | `fonts-liberation`   | Provides standard web fonts used in headless Chrome rendering            |
+| 12 | `whois`              | Performs ASN and WHOIS lookups for IP metadata enrichment                |
+| 13 | `wget`               | Command-line tool to download files and data from the web                |
+| 14 | `ca-certificates`    | Installs trusted CA certificates for secure HTTPS communication          |
+| 15 | `gnupg`              | Enables digital signing, encryption, and verification                    |
+| 16 | `lsb-release`        | Provides distro version info for environment detection and compatibility |
 
-2 python3-pip – Python package installer
-
-3 unzip – For extracting .zip files
-
-4 zip – For creating .zip archives
-
-5 p7zip-full – 7z archive tool (full version)
-
-6 p7zip-rar – RAR support for 7z
-
-7 unrar – Utility to extract .rar files
-
-8 libnss3 – Chrome/Chromium security library
-
-9 libxss1 – X11 Screen Saver extension (used by ChromeDriver)
-
-10 libappindicator3-1 – Application indicators (required by headless browsers)
-
-11 fonts-liberation – Web-friendly font pack used by Chrome
-
-12 whois – WHOIS lookup utility for ASN/IP metadata
-
-13 wget – Download utility for fetching files or APIs
-
-14 ca-certificates – Ensures trusted HTTPS communication
-
-15 gnupg – GNU Privacy Guard for secure signing and verification
-
-16 lsb-release – Detects Linux distribution version for compatibility
 
 ```
 
-> Google Chrome and ChromeDriver are auto-installed via the Python bootstrap script.
+> All non-inbuilt requirements are installed with the setup scripts
 
 ---
 
@@ -88,20 +76,23 @@ Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/instal
 
 Install via pip:
 ```Packages
-aiofiles
-aiohttp
-async-lru
-beautifulsoup4
-bs4
-colorama
-pandas
-pymongo
-py7zr
-rarfile
-reportlab
-selenium
-tqdm
-python-dotenv
+| #  | Package          | Purpose                                                         |
+| -- | ---------------- | --------------------------------------------------------------- |
+| 1  | `aiofiles`       | Asynchronous file operations without blocking the event loop    |
+| 2  | `aiohttp`        | Asynchronous HTTP requests and web client support               |
+| 3  | `async-lru`      | Caching for async functions to improve performance              |
+| 4  | `beautifulsoup4` | HTML/XML parsing for web scraping and document analysis         |
+| 5  | `bs4`            | Import alias for BeautifulSoup (required by some packages)      |
+| 6  | `colorama`       | Cross-platform colored terminal output                          |
+| 7  | `pandas`         | High-level data structures and analysis tools for CSV/JSON      |
+| 8  | `pymongo`        | MongoDB driver to insert and query intelligence data            |
+| 9  | `py7zr`          | 7-Zip archive extraction and creation                           |
+| 10 | `rarfile`        | Handle `.rar` files (usually for Shadowserver reports)          |
+| 11 | `reportlab`      | Generate structured PDF reports dynamically                     |
+| 12 | `selenium`       | Web automation for browser-based scraping or headless downloads |
+| 13 | `tqdm`           | Lightweight progress bars in loops and pipelines                |
+| 14 | `python-dotenv`  | Load environment variables from `.env` for config and secrets   |
+
 ```
 
 ---
