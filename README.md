@@ -116,8 +116,10 @@ email_address="cookies@example.com"
 email_password="cookiesonthelu"
 imap_shadowserver_folder_or_email_processing_folder="INBOX"
 
-# Advisory metadata
+# Advisory metadata (Future Plans)
 advisory_prefix="default-cert-"
+
+# Report metadata
 reference_nomenclature="default-cert-stat-"
 cert_name="DEFAULT-CERT"
 
@@ -136,15 +138,20 @@ geo_csv_fallback_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)(?:-\\d{3})?-<input_country_h
 
 # ====== Feature Spotlight: Anomaly Pattern Detection ======
 
-# Special detection patterns for troubleshooting or regional heuristics
+#=Special Detection In Case Of Issues---run just service flag to troubleshoot----
+#Real Life Scenarios
+# Anomaly patterns for Shadowserver consultationv -Blocked_IPs Report
 enable_anomaly_pattern_1="true"
 anomaly_pattern_1="^\d{4}-\d{2}-\d{2}-(\d+)_as\d+\.csv$"
 
+#Detected government asn naming at suffix 
 enable_anomaly_pattern_2="true"
 anomaly_pattern_2="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>[_-][a-z0-9\-]*_as\d+\.csv$"
 
+#Ransomware Reports Service Sorting
 enable_anomaly_pattern_3="true"
 anomaly_pattern_3="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>-geo\.csv$"
+
 
 enable_anomaly_pattern_4="false"
 anomaly_pattern_4=""
