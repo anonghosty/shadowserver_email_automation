@@ -99,13 +99,14 @@ Install via pip:
 
 ## Environment Configuration (`.env`)
 
-Example `.env` file:
+<details>
+<summary>Click to view example .env configuration</summary>
 
 ```dotenv
 # MongoDB credentials
 mongo_username="anon"
 mongo_password="input password"
-mongo_auth_source="input auth source whethere 'admin'"
+mongo_auth_source="admin"  # change if using a different auth DB
 mongo_host="127.0.0.1"
 mongo_port=27017
 
@@ -115,45 +116,39 @@ email_address="cookies@example.com"
 email_password="cookiesonthelu"
 imap_shadowserver_folder_or_email_processing_folder="INBOX"
 
+# Advisory metadata
 advisory_prefix="default-cert-"
-
-#for rerence system
 reference_nomenclature="default-cert-stat-"
-
-#for CSIRT Name
 cert_name="DEFAULT-CERT"
 
-#====== Performance Settings ========
+# ====== Performance Settings ======
 buffer_size="1024"
 flush_row_count=100
 tracker_batch_size=1000
 service_sorting_batch_size=1000
-number_of_files_ingested_into_knowledgebase_per_batch= 2000
+number_of_files_ingested_into_knowledgebase_per_batch=2000
 
-#-----REGEX SECTION----(change "<input_country_here>" to country name in lowercase. You can use find and replace "<input_country_here>" )
-# Regex pattern for filename 
+# ====== REGEX SECTION ======
+# Replace "<input_country_here>" with the country name in lowercase
+
 geo_csv_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)-<input_country_here>-geo_as\\d+\\.csv$"
+geo_csv_fallback_regex="^\\d{4}-\\d{2}-\\d{2}-(.*?)(?:-\\d{3})?-<input_country_here>_as\\d+\\.csv$"
 
-geo_csv_fallback_regex = "^\\d{4}-\\d{2}-\\d{2}-(.*?)(?:-\\d{3})?-<input_country_here>_as\\d+\\.csv$"
+# ====== Feature Spotlight: Anomaly Pattern Detection ======
 
-#NEW FEATURE!!! DING DING DING CHICKEN DINNER!!
-#-------Special Detection In Case Of Issues----------- run just service flag to troubleshoot-----------
-# Anomaly patterns for Shadowserver consultation
+# Special detection patterns for troubleshooting or regional heuristics
 enable_anomaly_pattern_1="true"
 anomaly_pattern_1="^\d{4}-\d{2}-\d{2}-(\d+)_as\d+\.csv$"
 
-#Detected government ASN naming at suffix
 enable_anomaly_pattern_2="true"
 anomaly_pattern_2="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>[_-][a-z0-9\-]*_as\d+\.csv$"
 
-#Ransomware Reports Service Sorting
 enable_anomaly_pattern_3="true"
 anomaly_pattern_3="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>-geo\.csv$"
 
-
 enable_anomaly_pattern_4="false"
 anomaly_pattern_4=""
-```
+</details> ```
 
 ---
 
@@ -230,7 +225,7 @@ python3 shadow_server_data_analysis_system_builder_and_updater.py all --tracker=
 # Only process downloaded reports without ingestion
 python3 shadow_server_data_analysis_system_builder_and_updater.py process --tracker-service=manual
 
-# select select a sequential combination flavor
+# Choose a sequential execution pattern (flavor):
 python3 shadow_server_data_analysis_system_builder_and_updater.py email process country service
 python3 shadow_server_data_analysis_system_builder_and_updater.py email refresh country service
 python3 shadow_server_data_analysis_system_builder_and_updater.py refresh country service ingest
