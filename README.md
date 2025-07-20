@@ -87,7 +87,7 @@ Install via pip:
 | 7  | `pandas`         | High-level data structures and analysis tools for CSV/JSON      |
 | 8  | `pymongo`        | MongoDB driver to insert and query intelligence data            |
 | 9  | `py7zr`          | 7-Zip archive extraction and creation                           |
-| 10 | `rarfile`        | Handle `.rar` files (usually for Shadowserver reports)          |
+| 10 | `rarfile`        | Handle `.rar` files          |
 | 11 | `reportlab`      | Generate structured PDF reports dynamically                     |
 | 12 | `selenium`       | Web automation for browser-based scraping or headless downloads |
 | 13 | `tqdm`           | Lightweight progress bars in loops and pipelines                |
