@@ -209,7 +209,7 @@ ingest  → Ingest Cleaned Shadowserver Data into the Knowledgebase (Databases &
 ```text
 email   → Pull Emails and Extract Shadowserver Attachments
    ↓
-refresh → Refresh Stored ASN/WHOIS Metadata
+refresh → Refresh Stored ASN/WHOIS data
    ↓
 process → Normalize and Parse Extracted CSV/JSON Reports
    ↓
