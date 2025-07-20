@@ -46,11 +46,38 @@ Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/instal
 ### OS-Level Dependencies (Ubuntu)
 
 ```bash
-sudo apt update && sudo apt install -y \
-    python3 python3-pip unzip zip \
-    p7zip-full p7zip-rar unrar \
-    libnss3 libxss1 libappindicator3-1 fonts-liberation \
-    whois wget ca-certificates gnupg lsb-release
+1 python3 – Python interpreter
+
+2 python3-pip – Python package installer
+
+3 unzip – For extracting .zip files
+
+4 zip – For creating .zip archives
+
+5 p7zip-full – 7z archive tool (full version)
+
+6 p7zip-rar – RAR support for 7z
+
+7 unrar – Utility to extract .rar files
+
+8 libnss3 – Chrome/Chromium security library
+
+9 libxss1 – X11 Screen Saver extension (used by ChromeDriver)
+
+10 libappindicator3-1 – Application indicators (required by headless browsers)
+
+11 fonts-liberation – Web-friendly font pack used by Chrome
+
+12 whois – WHOIS lookup utility for ASN/IP metadata
+
+13 wget – Download utility for fetching files or APIs
+
+14 ca-certificates – Ensures trusted HTTPS communication
+
+15 gnupg – GNU Privacy Guard for secure signing and verification
+
+16 lsb-release – Detects Linux distribution version for compatibility
+
 ```
 
 > Google Chrome and ChromeDriver are auto-installed via the Python bootstrap script.
