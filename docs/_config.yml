@@ -1,3 +1,9 @@
-title: Shadowserver CSIRT Tools
-description: Documentation for Shadowserver report automation.
-theme: minima
+title: Shadowserver CSIRT Toolkit
+description: Documentation and tools for automating Shadowserver reports
+theme: just-the-docs
+
+# Set base URL if using GitHub Pages under a repo (not a user site)
+baseurl: "/shadowserver_email_automation"
+
+# Enable sidebar navigation
+nav_sort: case_insensitive
