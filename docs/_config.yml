@@ -1,5 +1,5 @@
-title: Shadowserver CSIRT Toolkit
-description: Documentation for automating Shadowserver reports
+title: Shadowserver Report Ingestion Via Email Toolkit
+description: Documentation for automating Shadowserver reports received via email
 
 remote_theme: just-the-docs/just-the-docs
 baseurl: "/shadowserver_email_automation"
