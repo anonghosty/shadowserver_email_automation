@@ -21,6 +21,12 @@ This toolkit is designed for **Linux (Ubuntu/Debian)** systems and requires the 
 
 ---
 
+## Clone The Repo 
+```bash
+git clone https://github.com/anonghosty/shadowserver_email_automation.git
+cd  shadowserver_email_automation
+```
+
 ## 🔧 One-Line Installation (Recommended)
 
 To automatically install Python, pip, Chrome, MongoDB dependencies, and all required packages:
@@ -28,7 +34,7 @@ To automatically install Python, pip, Chrome, MongoDB dependencies, and all requ
 ```bash
 chmod +x install_python_and_run_bootstrap.sh
 ./install_python_and_run_bootstrap.sh
-
+```
 
 # 🛠️ Local MongoDB Installation Guide (Ubuntu 24.04)
 
