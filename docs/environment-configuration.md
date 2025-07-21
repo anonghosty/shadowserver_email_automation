@@ -1,4 +1,6 @@
+---
 title: environment-configuration
+---
 # Environment Variables Explained
 
 The `.env` file is used to configure runtime parameters like MongoDB access, email ingestion, metadata logic, anomaly detection, and batch processing. This enables safe, dynamic configuration without modifying the codebase.
