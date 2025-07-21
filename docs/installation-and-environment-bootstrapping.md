@@ -1,3 +1,6 @@
+---
+title: Installation & Environment Bootstrapping
+---
 # 🧱 Installation & Environment Bootstrapping
 
 This section covers how to prepare your system to run the **Shadowserver Report Ingestion & Intelligence Toolkit**, including OS packages, Python libraries, Chrome setup, and first-time bootstrap commands.
