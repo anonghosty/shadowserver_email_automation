@@ -16,7 +16,7 @@ nav:
   - Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
   - Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
 
-# Custom CSS to adjust top margin of page titles
+# Custom CSS to adjust layout
 just_the_docs:
   custom_css: "assets/css/custom.css"
 
