@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ org_name }} – Shadowserver Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0f1117;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eaeaea;
+      line-height: 1.6;
+    }
+
+    .container {
+    
+      margin: 40px auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    h1, h2 {
+      color: #ffffff;
+      border-left: 5px solid #5c7cfa;
+      padding-left: 10px;
+      margin-top: 40px;
+    }
+
+    .info {
+      margin-top: 10px;
+      font-size: 0.95em;
+      color: #cccccc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+    }
+
+    thead {
+      background-color: #1f232f;
+    }
+
+    th {
+      color: #ffffff;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #2a2f3a;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #1c1f27;
+    }
+
+    a {
+      color: #5c7cfa;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .severity-CRITICAL .badge { background-color: #ff4c4c; color: white; }
+    .severity-HIGH .badge { background-color: #ff944c; color: black; }
+    .severity-MEDIUM .badge { background-color: #ffc107; color: black; }
+    .severity-LOW .badge { background-color: #17c0eb; color: black; }
+    .severity-INFO .badge { background-color: #aaa; color: black; }
+
+    .search-input {
+      padding: 10px 15px;
+      margin: 10px 0 20px 0;
+      border: none;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      background-color: #2c2f3a;
+      color: #eaeaea;
+      font-size: 1em;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .search-input:focus {
+      outline: none;
+      box-shadow: 0 0 10px #5c7cfa;
+    }
+
+    .tlp-footer {
+      margin-top: 40px;
+      font-size: 0.85em;
+      color: #999;
+      border-top: 1px solid #444;
+      padding-top: 15px;
+    }
+  </style>
+
+  <script>
+    function searchTable(id, query) {
+      let rows = document.querySelectorAll(`#${id} tbody tr`);
+      query = query.toLowerCase();
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+      });
+    }
+
+    function sortCategoryBySeverity() {
+      const table = document.getElementById("categoryTable").getElementsByTagName("tbody")[0];
+      const rows = Array.from(table.rows);
+      const severityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4, 'INFO': 5 };
+
+      rows.sort((a, b) => {
+        const severityA = severityOrder[a.cells[0].innerText.trim().toUpperCase()] || 99;
+        const severityB = severityOrder[b.cells[0].innerText.trim().toUpperCase()] || 99;
+        return severityA - severityB;
+      });
+
+      rows.forEach(row => table.appendChild(row));
+    }
+
+    document.addEventListener("DOMContentLoaded", sortCategoryBySeverity);
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>{{ org_name }} – Shadowserver Report</h1>
+    <div class="info">
+      <p><strong>Reference:</strong> {{ reference_number }}</p>
+      <p><strong>Report Date:</strong> {{ generated_on }}</p>
+      <p><strong>TLP:</strong> AMBER</p>
+    </div>
+
+    <h2>Executive Summary</h2>
+    <p>{{ summary_text }}</p>
+
+    <h2>IP Event Table</h2>
+    <input class="search-input" type="text" placeholder="Search IPs..." onkeyup="searchTable('ipTable', this.value)">
+    <table id="ipTable">
+      <thead>
+        <tr><th>IP</th><th>Prefix</th><th>ASN(s)</th><th>Categories</th><th>ASN→Category Map</th></tr>
+      </thead>
+      <tbody>
+        {% for row in ip_table_rows %}
+        <tr>
+          <td>{{ row.ip }}</td>
+          <td>{{ row.prefix }}</td>
+          <td>{{ row.asn }}</td>
+          <td>{{ row.categories }}</td>
+          <td>{{ row.asn_map }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Prefix Summary</h2>
+    <input class="search-input" type="text" placeholder="Search Prefixes..." onkeyup="searchTable('prefixTable', this.value)">
+    <table id="prefixTable">
+      <thead><tr><th>Prefix</th><th>IP Count</th></tr></thead>
+      <tbody>
+        {% for prefix, count in prefix_counts %}
+        <tr><td>{{ prefix }}</td><td>{{ count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Category Metadata</h2>
+    <input class="search-input" type="text" placeholder="Search Categories..." onkeyup="searchTable('categoryTable', this.value)">
+    <table id="categoryTable">
+      <thead>
+        <tr><th>Severity</th><th>Title</th><th>Description</th><th>Category</th><th>IP Count</th><th>URL</th></tr>
+      </thead>
+      <tbody>
+        {% for row in category_rows %}
+        <tr class="severity-{{ row.severity }}">
+          <td><span class="badge">{{ row.severity }}</span></td>
+          <td>{{ row.title }}</td>
+          <td>{{ row.description }}</td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.count }}</td>
+          <td><a href="{{ row.url }}">{{ row.url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="tlp-footer">
+      TLP:AMBER – This report is confidential between the recipient organization and the reporting CERT.
+    </div>
+  </div>
+</body>
+</html>
