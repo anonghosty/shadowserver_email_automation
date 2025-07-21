@@ -1,6 +1,6 @@
 ---
+title: Home
 layout: default
-title: Shadowserver Report Ingestion & Intelligence Toolkit
 ---
 
 # Shadowserver Report Ingestion & Intelligence Toolkit
