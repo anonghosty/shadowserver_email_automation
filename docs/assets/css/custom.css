@@ -1,11 +1,21 @@
 /* Reduce top margin of first page title */
 .main-content h1:first-of-type {
-  margin-top: 0.75rem !important; /* Adjust as needed */
+  margin-top: 0.75rem !important;
   padding-top: 0.25rem;
 }
 
-/* Add space above sidebar project title */
+/* Optional space above sidebar site title */
 .sidebar .site-title {
-  margin-top: 1rem;  /* or 1.5rem for more spacing */
+  margin-top: 1rem;
+  margin-bottom: 2rem; /* Adds spacing below the title for better separation */
 }
 
+/* Vertically center the sidebar contents */
+@media screen and (min-width: 60em) {
+  .side-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100vh;
+  }
+}
