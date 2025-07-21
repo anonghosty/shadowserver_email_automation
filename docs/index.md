@@ -28,20 +28,6 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 
 ---
 
-## 📖 Documentation
-
-Navigate the toolkit documentation below:
-
-- [🏠 Home](index.md)
-- [🧱 System Requirements](system-requirements.md)
-- [⚙️ Installation & Environment Bootstrapping](installation-and-environment-bootstrapping.md)
-- [🛠️ Environment Configuration](environment-configuration.md)
-- [📬 Shadowserver Report Ingestion ‐ Usage & Flow](shadowserver-report-ingestion-usage-and-flow.md)
-- [🧪 Shadowserver Report Metadata Scraper](shadowserver-report-metadata-scraper.md)
-- [🏢 Organization‐Based Shadowserver Report Generator](organization-based-shadowserver-report-generator.md)
-
----
-
 ## 📬 Feedback & Contributions
 
 If you're a CSIRT team or security analyst interested in collaborating or providing feedback, feel free to reach out via [LinkedIn](https://www.linkedin.com/in/iowuraku) or email me at (iassistuontoolkits@gmail.com).
