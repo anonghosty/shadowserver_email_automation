@@ -15,3 +15,10 @@ nav:
   - Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
   - Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
   - Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
+
+# Custom CSS to adjust top margin of page titles
+just_the_docs:
+  custom_css: "assets/css/custom.css"
+
+sass:
+  style: compressed
