@@ -21,8 +21,8 @@ This file maps organizations to the ASNs they are responsible for. It's used to 
 
 ```csv
 org_name,asn
-MTN,30986
-Telecel,29614
+COMPANY A,30986
+COMPANY B,29614
 ```
 - Multiple ASNs can be comma-separated in the `asn` column.
 - `org_name` will be used as the folder name for reports.
@@ -66,6 +66,7 @@ Reports are saved under:
 ```
 statistical_data/<org>/
 ├── <org>_reported_shadowserverver_events_<date>.csv
+├── <org>_reported_shadowserverver_events_<date>.html
 └── <org>_reported_shadowserverver_events_<date>.pdf
 ```
 
