@@ -1,3 +1,6 @@
+---
+title: Shadowserver Report Ingestion - Usage & Flow
+---
 # 📥 Shadowserver Report Ingestion - Usage & Flow
 
 This section explains how to run the Shadowserver ingestion pipeline using the core CLI entry point:  
