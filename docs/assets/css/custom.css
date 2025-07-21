@@ -3,3 +3,9 @@
   margin-top: 0.75rem !important; /* Adjust as needed */
   padding-top: 0.25rem;
 }
+
+/* Add space above sidebar project title */
+.sidebar .site-title {
+  margin-top: 1rem;  /* or 1.5rem for more spacing */
+}
+
