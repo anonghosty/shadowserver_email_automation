@@ -1,3 +1,6 @@
+---
+title: Shadowserver Report Metadata Scraper
+---
 # 🌐 Shadowserver Report Metadata Scraper
 
 This component scrapes live Shadowserver.org report metadata and stores structured reference data for use in intelligence reports and ingestion logic.
