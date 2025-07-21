@@ -1,0 +1,5 @@
+/* Reduce top margin of first page title */
+.main-content h1:first-of-type {
+  margin-top: 0.75rem !important; /* Adjust as needed */
+  padding-top: 0.25rem;
+}
