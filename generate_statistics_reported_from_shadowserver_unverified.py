@@ -19,6 +19,9 @@ from reportlab.platypus import (
 )
 from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_JUSTIFY
+from jinja2 import Template
+
+
 load_dotenv(dotenv_path=".env", override=True)
 today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 ascii_banner_logo = r"""
@@ -612,10 +615,59 @@ for org, asns in tqdm(org_asn_map.items(), desc="Processing Organizations"):
 
             doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
             print(f"📄 PDF report saved to {pdf_path} with reference {reference_number}")
+
+            # === Step 4: Generate Offline HTML Report ===
+            html_path = os.path.join(save_path, f"{filename_base}.html")
+            from jinja2 import Template
+
+            # Load basic HTML template (you should create 'report_template.html')
+            with open("report_template.html", encoding="utf-8") as f:
+                template = Template(f.read())
+
+            html_content = template.render(
+                org_name=org,
+                reference_number=reference_number,
+                generated_on=today_date,
+                summary_text=summary_text,
+                ip_table_rows=[
+                    {
+                        "ip": ip,
+                        "prefix": ", ".join(sorted(details.get("prefix", "").split(","))),
+                        "asn": ", ".join(sorted(details.get("asn", []))),
+                        "categories": ", ".join([
+                            f"{clean_category_name(k)}[{v}]"
+                            for k, v in sorted(details.get("categories", {}).items())
+                        ]),
+                        "asn_map": ", ".join([
+                            f"{asn}({', '.join(sorted({clean_category_name(c) for c in cats}))})"
+                            for asn, cats in sorted(details.get("asn_category_map", {}).items())
+                        ])
+                    } for ip, details in org_ip_summary.items()
+                ],
+                prefix_counts=list(prefix_counts.items()),
+                category_rows=[
+                    {
+                        "severity": report_metadata.get(cat.lower(), {}).get("Severity", "LOOKUP"),
+                        "title": report_metadata.get(cat.lower(), {}).get("Title", ""),
+                        "description": report_metadata.get(cat.lower(), {}).get("Description", ""),
+                        "category": cat,
+                        "count": count,
+                        "url": report_metadata.get(cat.lower(), {}).get("URL", "")
+                    } for cat, count in category_counts.items()
+                ]
+            )
+
+            with open(html_path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+
+            print(f"🌐 HTML report saved to {html_path} with reference {reference_number}")
+
         else:
             print(f"⚠️ No extracted_date matches for {org}.")
+
     finally:
         del org_ip_summary
         del prefix_ip_counter
         gc.collect()
         print(f"🧹 Memory cleaned up for {org}")
+
