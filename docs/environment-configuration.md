@@ -1,5 +1,5 @@
 ---
-title: environment-configuration
+title: Environment Variables Explained
 ---
 # Environment Variables Explained
 
