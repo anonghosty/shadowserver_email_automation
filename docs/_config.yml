@@ -10,7 +10,7 @@ nav:
   - Home: index.md
   - System Requirements: system-requirements.md
   - Installation & Bootstrapping: installation-and-environment-bootstrapping.md
-  - Environment Configuration: environment-configuration.md
-  - Ingestion Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
-  - Metadata Scraper: shadowserver-report-metadata-scraper.md
-  - Organization-Based Generator: organization-based-shadowserver-report-generator.md
+  - Environment Variables Explained: environment-configuration.md
+  - Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
+  - Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
+  - Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
