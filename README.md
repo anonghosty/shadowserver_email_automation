@@ -16,7 +16,7 @@ Key features include:
 - Archive and attachment extraction (ZIP, RAR, 7z)
 - CSV validation, geo/IP/ASN enrichment
 - Organization mapping and alert tracking
-- Daily PDF/CSV statistical summaries
+- 3 flavored variations for report generation daily - CSV {can be used in automation}, PDF {can be be used in official reporting}, HTML {has charts and search bars}
 - Full support for MongoDB-backed enrichment
 - Chrome + Selenium automation for scraping report metadata
 
