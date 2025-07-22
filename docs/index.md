@@ -47,7 +47,6 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 - Metadata scraping using Selenium + Chrome
 
 ![metadata](metadata_sample.png)
-
 ---
 
 ## 📬 Feedback & Contributions
