@@ -4,7 +4,7 @@ description: Documentation for automating Shadowserver reports received via emai
 remote_theme: just-the-docs/just-the-docs
 baseurl: "/shadowserver_email_automation"
 
-nav_sort: false  # <- Enforces your manual nav order
+nav_sort: false  # Manual nav order is preserved
 
 # Sidebar navigation
 nav:
@@ -15,9 +15,6 @@ nav:
   - Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
   - Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
   - Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
-
-just_the_docs:
-  custom_css: "assets/css/custom.css"
 
 sass:
   style: compressed
