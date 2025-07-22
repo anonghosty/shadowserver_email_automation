@@ -39,8 +39,11 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 - PDF/CSV report generation
 
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
+
 - MongoDB-based enrichment and storage
 - Metadata scraping using Selenium + Chrome
+- 
+![metadata](metadata_sample.png)
 
 ---
 
