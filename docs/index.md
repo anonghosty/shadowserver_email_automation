@@ -27,10 +27,13 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 ![Archive Sort](sorted_sample.png)
 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
+![Tracker](tracker sample.png)
+![Whois Sort](whois_sample.png)
+  
 - Country and service-based categorization
 
-![Country Sort](sorted_sample.png)
-
+![Country Sort](country_sort_example.png)
+![Service Sort](service_sample.png)
 
 - PDF/CSV report generation
 
