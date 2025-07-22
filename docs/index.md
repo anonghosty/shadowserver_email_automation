@@ -21,8 +21,11 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 - Email attachment ingestion (IMAP)
 
 ![IMAP](imap.png)
+
 - ZIP, RAR, and 7z archive extraction
+
 ![Archive Sort](sorted_sample.png)
+
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 - Country and service-based categorization
 - PDF/CSV report generation
