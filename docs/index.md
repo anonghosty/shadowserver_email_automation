@@ -19,6 +19,7 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 ## 🚀 Key Features
 
 - Email attachment ingestion (IMAP)
+  ![Severity Pie Chart](imap.png)
 - ZIP, RAR, and 7z archive extraction
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 - Country and service-based categorization
