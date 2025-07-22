@@ -5,6 +5,8 @@
 **License:** [MIT (Modified - No Resale)](./LICENSE)
 
 ---
+##Documentation 
+https://anonghosty.github.io/shadowserver_email_automation/installation-and-environment-bootstrapping.html
 
 ## Overview
 
