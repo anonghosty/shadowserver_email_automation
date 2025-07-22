@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>{{ org_name }} – Shadowserver Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       margin: 0;
@@ -15,7 +16,7 @@
     }
 
     .container {
-    
+      max-width: 1200px;
       margin: 40px auto;
       padding: 20px;
       background: rgba(255, 255, 255, 0.05);
@@ -109,6 +110,21 @@
       box-shadow: 0 0 10px #5c7cfa;
     }
 
+    .chart-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    canvas {
+      background-color: #1c1f27;
+      border-radius: 10px;
+      padding: 15px;
+      max-width: 500px;
+    }
+
     .tlp-footer {
       margin-top: 40px;
       font-size: 0.85em;
@@ -131,17 +147,55 @@
       const table = document.getElementById("categoryTable").getElementsByTagName("tbody")[0];
       const rows = Array.from(table.rows);
       const severityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4, 'INFO': 5 };
-
       rows.sort((a, b) => {
         const severityA = severityOrder[a.cells[0].innerText.trim().toUpperCase()] || 99;
         const severityB = severityOrder[b.cells[0].innerText.trim().toUpperCase()] || 99;
         return severityA - severityB;
       });
-
       rows.forEach(row => table.appendChild(row));
     }
 
-    document.addEventListener("DOMContentLoaded", sortCategoryBySeverity);
+    document.addEventListener("DOMContentLoaded", () => {
+      sortCategoryBySeverity();
+
+      // Prepare severity and category counts for pie charts
+      const severityCounts = {};
+      const categoryCounts = {};
+      document.querySelectorAll('#categoryTable tbody tr').forEach(row => {
+        const severity = row.cells[0].innerText.trim();
+        const category = row.cells[3].innerText.trim();
+        const count = parseInt(row.cells[4].innerText.trim()) || 1;
+
+        severityCounts[severity] = (severityCounts[severity] || 0) + count;
+        categoryCounts[category] = (categoryCounts[category] || 0) + count;
+      });
+
+      const makeChart = (ctxId, dataObj, labelText) => {
+        new Chart(document.getElementById(ctxId), {
+          type: 'pie',
+          data: {
+            labels: Object.keys(dataObj),
+            datasets: [{
+              label: labelText,
+              data: Object.values(dataObj),
+              backgroundColor: [
+                '#ff4c4c', '#ff944c', '#ffc107', '#17c0eb', '#999',
+                '#845ec2', '#00c9a7', '#f9c74f', '#90be6d', '#43aa8b'
+              ]
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: '#fff' } },
+              title: { display: true, text: labelText, color: '#fff', font: { size: 18 } }
+            }
+          }
+        });
+      };
+
+      makeChart('severityChart', severityCounts, 'Events by Severity');
+      makeChart('categoryChart', categoryCounts, 'Events by Category');
+    });
   </script>
 </head>
 
@@ -160,9 +214,7 @@
     <h2>IP Event Table</h2>
     <input class="search-input" type="text" placeholder="Search IPs..." onkeyup="searchTable('ipTable', this.value)">
     <table id="ipTable">
-      <thead>
-        <tr><th>IP</th><th>Prefix</th><th>ASN(s)</th><th>Categories</th><th>ASN→Category Map</th></tr>
-      </thead>
+      <thead><tr><th>IP</th><th>Prefix</th><th>ASN(s)</th><th>Categories</th><th>ASN→Category Map</th></tr></thead>
       <tbody>
         {% for row in ip_table_rows %}
         <tr>
@@ -206,6 +258,11 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <div class="chart-wrapper">
+      <canvas id="severityChart" width="400" height="400"></canvas>
+      <canvas id="categoryChart" width="400" height="400"></canvas>
+    </div>
 
     <div class="tlp-footer">
       TLP:AMBER – This report is confidential between the recipient organization and the reporting CERT.
