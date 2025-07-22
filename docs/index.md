@@ -23,7 +23,7 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 - Country and service-based categorization
 - PDF/CSV report generation
-  ![Severity Pie Chart](assets/images/pie_chart_severity_display_sample.png)
+  ![Severity Pie Chart](pie_chart_severity_display_sample.png)
 - MongoDB-based enrichment and storage
 - Metadata scraping using Selenium + Chrome
 
