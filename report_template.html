@@ -134,69 +134,83 @@
     }
   </style>
 
-  <script>
-    function searchTable(id, query) {
-      let rows = document.querySelectorAll(`#${id} tbody tr`);
-      query = query.toLowerCase();
-      rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
-      });
-    }
-
-    function sortCategoryBySeverity() {
-      const table = document.getElementById("categoryTable").getElementsByTagName("tbody")[0];
-      const rows = Array.from(table.rows);
-      const severityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4, 'INFO': 5 };
-      rows.sort((a, b) => {
-        const severityA = severityOrder[a.cells[0].innerText.trim().toUpperCase()] || 99;
-        const severityB = severityOrder[b.cells[0].innerText.trim().toUpperCase()] || 99;
-        return severityA - severityB;
-      });
-      rows.forEach(row => table.appendChild(row));
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      sortCategoryBySeverity();
-
-      // Prepare severity and category counts for pie charts
-      const severityCounts = {};
-      const categoryCounts = {};
-      document.querySelectorAll('#categoryTable tbody tr').forEach(row => {
-        const severity = row.cells[0].innerText.trim();
-        const category = row.cells[3].innerText.trim();
-        const count = parseInt(row.cells[4].innerText.trim()) || 1;
-
-        severityCounts[severity] = (severityCounts[severity] || 0) + count;
-        categoryCounts[category] = (categoryCounts[category] || 0) + count;
-      });
-
-      const makeChart = (ctxId, dataObj, labelText) => {
-        new Chart(document.getElementById(ctxId), {
-          type: 'pie',
-          data: {
-            labels: Object.keys(dataObj),
-            datasets: [{
-              label: labelText,
-              data: Object.values(dataObj),
-              backgroundColor: [
-                '#ff4c4c', '#ff944c', '#ffc107', '#17c0eb', '#999',
-                '#845ec2', '#00c9a7', '#f9c74f', '#90be6d', '#43aa8b'
-              ]
-            }]
-          },
-          options: {
-            plugins: {
-              legend: { labels: { color: '#fff' } },
-              title: { display: true, text: labelText, color: '#fff', font: { size: 18 } }
-            }
-          }
-        });
-      };
-
-      makeChart('severityChart', severityCounts, 'Events by Severity');
-      makeChart('categoryChart', categoryCounts, 'Events by Category');
+<script>
+  function searchTable(id, query) {
+    let rows = document.querySelectorAll(`#${id} tbody tr`);
+    query = query.toLowerCase();
+    rows.forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
     });
-  </script>
+  }
+
+  function sortCategoryBySeverity() {
+    const table = document.getElementById("categoryTable").getElementsByTagName("tbody")[0];
+    const rows = Array.from(table.rows);
+    const severityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4, 'INFO': 5 };
+    rows.sort((a, b) => {
+      const severityA = severityOrder[a.cells[0].innerText.trim().toUpperCase()] || 99;
+      const severityB = severityOrder[b.cells[0].innerText.trim().toUpperCase()] || 99;
+      return severityA - severityB;
+    });
+    rows.forEach(row => table.appendChild(row));
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    sortCategoryBySeverity();
+
+    const severityColors = {
+      'CRITICAL': '#ff4c4c',
+      'HIGH': '#ff944c',
+      'MEDIUM': '#ffc107',
+      'LOW': '#17c0eb',
+      'INFO': '#999999'
+    };
+
+    const severityCounts = {};
+    const categoryCounts = {};
+    const categorySeverity = {};
+
+    document.querySelectorAll('#categoryTable tbody tr').forEach(row => {
+      const severity = row.cells[0].innerText.trim().toUpperCase();
+      const category = row.cells[3].innerText.trim();
+      const count = parseInt(row.cells[4].innerText.trim()) || 1;
+
+      severityCounts[severity] = (severityCounts[severity] || 0) + count;
+      categoryCounts[category] = (categoryCounts[category] || 0) + count;
+      categorySeverity[category] = severity; // Store severity for this category
+    });
+
+    const makeChart = (ctxId, dataObj, labelText, colorCallback) => {
+      new Chart(document.getElementById(ctxId), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(dataObj),
+          datasets: [{
+            label: labelText,
+            data: Object.values(dataObj),
+            backgroundColor: Object.keys(dataObj).map(colorCallback)
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { labels: { color: '#fff' } },
+            title: { display: true, text: labelText, color: '#fff', font: { size: 18 } }
+          }
+        }
+      });
+    };
+
+    // Severity chart — color by severity
+    makeChart('severityChart', severityCounts, 'Events by Severity', severity => severityColors[severity.toUpperCase()] || '#555');
+
+    // Category chart — color by severity of category
+    makeChart('categoryChart', categoryCounts, 'Events by Category', category => {
+      const sev = categorySeverity[category];
+      return severityColors[sev] || '#666';
+    });
+  });
+</script>
+
 </head>
 
 <body>
