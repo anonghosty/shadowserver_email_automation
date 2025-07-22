@@ -28,6 +28,10 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 - Country and service-based categorization
+
+![Country Sort](sorted_sample.png)
+
+
 - PDF/CSV report generation
 
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
