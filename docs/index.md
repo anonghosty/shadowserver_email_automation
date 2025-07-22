@@ -41,11 +41,9 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
 
 - MongoDB-based enrichment and storage
-
 ![Knowledge](knowledge_sample.png)
 
 - Metadata scraping using Selenium + Chrome
-
 ![metadata](metadata_sample.png)
 ---
 
