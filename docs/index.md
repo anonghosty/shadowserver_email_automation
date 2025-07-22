@@ -27,6 +27,7 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 ![Archive Sort](sorted_sample.png)
 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
+
 ![Tracker](tracker sample.png)
 ![Whois Sort](whois_sample.png)
   
