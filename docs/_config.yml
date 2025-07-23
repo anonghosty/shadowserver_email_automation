@@ -8,7 +8,7 @@ nav_sort: false
 
 # Sidebar navigation (manually ordered)
 nav:
-  - 01 Home: 01_index.md
+  - 01 Home: index.md
   - 02 System Requirements: 02_system-requirements.md
   - 03 Installation & Bootstrapping: 03_installation-and-environment-bootstrapping.md
   - 04 Environment Variables Explained: 04_environment-configuration.md
