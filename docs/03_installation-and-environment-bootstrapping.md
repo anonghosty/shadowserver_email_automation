@@ -1,5 +1,5 @@
 ---
-title: Installation & Environment Bootstrapping
+title: 03 Installation & Environment Bootstrapping
 ---
 # 🧱 Installation & Environment Bootstrapping
 
