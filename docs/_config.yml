@@ -8,13 +8,13 @@ nav_sort: false
 
 # Sidebar navigation (manually ordered)
 nav:
-  - 01 Home: index.md
-  - 02 System Requirements: system-requirements.md
-  - 03 Installation & Bootstrapping: installation-and-environment-bootstrapping.md
-  - 04 Environment Variables Explained: environment-configuration.md
-  - 05 Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
-  - 06 Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
-  - 07 Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
+  - 01 Home: 01_index.md
+  - 02 System Requirements: 02_system-requirements.md
+  - 03 Installation & Bootstrapping: 03_installation-and-environment-bootstrapping.md
+  - 04 Environment Variables Explained: 04_environment-configuration.md
+  - 05 Shadowserver Report Ingestion - Usage & Flow: 05_shadowserver-report-ingestion-usage-and-flow.md
+  - 06 Shadowserver Report Metadata Scraper: 06_shadowserver-report-metadata-scraper.md
+  - 07 Organization-Based Shadowserver Report Generator: 07_organization-based-shadowserver-report-generator.md
 
 sass:
   style: compressed
