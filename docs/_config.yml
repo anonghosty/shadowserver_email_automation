@@ -4,17 +4,17 @@ description: Documentation for automating Shadowserver reports received via emai
 remote_theme: just-the-docs/just-the-docs
 baseurl: "/shadowserver_email_automation"
 
-nav_sort: false  # Manual nav order is preserved
+nav_sort: false
 
-# Sidebar navigation
+# Sidebar navigation (manually ordered)
 nav:
-  - Home: index.md
-  - System Requirements: system-requirements.md
-  - Installation & Bootstrapping: installation-and-environment-bootstrapping.md
-  - Environment Variables Explained: environment-configuration.md
-  - Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
-  - Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
-  - Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
+  - 01 Home: index.md
+  - 02 System Requirements: system-requirements.md
+  - 03 Installation & Bootstrapping: installation-and-environment-bootstrapping.md
+  - 04 Environment Variables Explained: environment-configuration.md
+  - 05 Shadowserver Report Ingestion - Usage & Flow: shadowserver-report-ingestion-usage-and-flow.md
+  - 06 Shadowserver Report Metadata Scraper: shadowserver-report-metadata-scraper.md
+  - 07 Organization-Based Shadowserver Report Generator: organization-based-shadowserver-report-generator.md
 
 sass:
   style: compressed
