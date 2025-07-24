@@ -262,7 +262,7 @@ Stores output in:
 ## Generate Statistics Per Organization
 
 Use a constituent map in `shadowserver_analysis_system/detected_companies/constituent_map.csv`.
-
+Place company logo  named as "logo.png" in base directory
 ```bash
 python3 generate_statistics_reported_from_shadowserver_unverified.py
 ```
