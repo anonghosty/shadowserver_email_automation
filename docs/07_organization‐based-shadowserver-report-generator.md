@@ -6,14 +6,19 @@ title: 07 Organization-Based Shadowserver Report Generator
 This module analyzes enriched Shadowserver data by mapping **ASNs to organizations** to generate statistical reports in both **CSV and PDF** formats.
 
 ---
+## Company Logo
+Place company logo named "logo.png" in Base Directory
 
 ## 🗂️ Expected `constituent_map.csv` Format
 
 This file maps organizations to the ASNs they are responsible for. It's used to isolate Shadowserver-reported IPs by ASN ownership.
+
 | Column     | Description                                                                                                                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `org_name` | **Organization Name** — A label used to identify the entity (e.g., MTN). This will be used to create folders under `statistical_data/`.                                                      |
 | `asn`      | **Autonomous System Number(s)** — A single ASN or a comma-separated list of ASNs that belong to the organization. Each will be matched against MongoDB databases with names like `_as{ASN}`. |
+
+
 
 
 
