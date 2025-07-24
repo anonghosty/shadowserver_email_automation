@@ -3,9 +3,10 @@ description: Documentation for automating Shadowserver reports received via emai
 
 remote_theme: just-the-docs/just-the-docs
 baseurl: "/shadowserver_email_automation"
+url: "https://anonghosty.github.io/shadowserver_email_automation/" 
 
-
-
+plugins:
+  - jekyll-sitemap
 
 sass:
   style: compressed
