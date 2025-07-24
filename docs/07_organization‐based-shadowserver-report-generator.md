@@ -31,16 +31,16 @@ This file maps organizations to the ASNs they are responsible for. It's used to 
 org_name,asn
 COMPANY A,30986
 COMPANY B,29614
-
+```
 How It Looks as a Table in Excel as CSV format
 
-| org\_name | asn   |
+| org_name | asn    |
 | --------- | ----- |
 | COMPANY A | 30986 |
 | COMPANY B | 29614 |
 
 
-```
+
 - Multiple ASNs can be comma-separated in the `asn` column.
 - `org_name` will be used as the folder name for reports.
 
