@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://anonghosty.github.io/shadowserver_email_automation/sitemap.xml
