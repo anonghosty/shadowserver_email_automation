@@ -18,7 +18,7 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 
 ## 🚀 Key Features
 
-- Email attachment ingestion (IMAP)
+- Email attachment ingestion (IMAP Basic Authentication)
 
 ![IMAP](imap.png)
 
