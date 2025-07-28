@@ -14,7 +14,7 @@ This project automates the collection, parsing, categorization, and reporting of
 
 Key features include:
 
-- IMAP email ingestion (generic)
+- IMAP basic authentication email ingestion (generic)
 - Archive and attachment extraction (ZIP, RAR, 7z)
 - CSV validation, geo/IP/ASN enrichment
 - Organization mapping and alert tracking
