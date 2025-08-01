@@ -340,6 +340,12 @@ async def main_email_ingestion():
     logging_dir = "logging"
     tracker_dir = "file_tracking_system"
 
+    # Folder creation logic (Claire will handle the imports)
+    for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+
     # ✅ Ensure folders exist
     for d in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
         ensure_dir(d)
