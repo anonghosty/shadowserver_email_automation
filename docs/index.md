@@ -22,7 +22,7 @@ This section acknowledges the institutional input and guidance received during t
 
 1. **National CSIRT of Kenya**  
    ![National CSIRT of Kenya Logo](national_kenyan_csirt_logo_20250208.jpeg)  
-   **Contribution:** Provided official communication (cirt@ke-cirt.go.ke), technical mitigation steps (0365 – Microsoft Graph), and tutorial documentation (PDF format).
+   **Contribution:** Provided official communication (cirt@ke-cirt.go.ke), technical mitigation steps (0365 – Microsoft Graph, Google Workspace), and tutorial documentation (PDF format).
 
 ---
 ## 🚀 Key Features
