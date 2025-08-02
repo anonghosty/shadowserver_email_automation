@@ -5,7 +5,8 @@ layout: default
 
 # Shadowserver Report Ingestion & Intelligence Toolkit
 
-**Author:** [Ike Owuraku Amponsah](https://www.linkedin.com/in/iowuraku)  
+**Author:** [Ike Owuraku Amponsah](https://www.linkedin.com/in/iowuraku) 
+**Contributors:** [KeCIRT]([https://www.linkedin.com/in/iowuraku](https://ke-cirt.go.ke/) 
 **License:** [MIT (Modified - No Resale)](https://github.com/anonghosty/shadowserver_email_automation/blob/main/LICENSE)
 
 ---
