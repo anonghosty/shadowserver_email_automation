@@ -12,7 +12,7 @@ This section acknowledges the institutional input and guidance received during t
 
 1. **National CSIRT of Kenya**  
    ![National CSIRT of Kenya Logo](docs/national_kenyan_csirt_logo_20250208.jpeg)  
-   **Contribution:** Provided official communication (cirt@ke-cirt.go.ke), technical mitigation steps (0365 – Microsoft Graph), and tutorial documentation (PDF format).
+   **Contribution:** Provided official communication (cirt@ke-cirt.go.ke), technical mitigation steps (0365 – Microsoft Graph, Google Workspace), and tutorial documentation (PDF format).
 
 ---
 
@@ -47,7 +47,7 @@ On the First of August 2025, I received a message from the National CSIRT of Ken
 
 For organizations needing to configure an O365 application to interact with Microsoft Graph securely and correctly, CSIRT Kenya also provided a setup guide. You can find the tutorial below:
 
-[National KE CSIRT Steps for O365 Application Creation (2025-02-08)](docs/national_ke_csirt_steps_0365_application_creation_20250208.pdf)
+[National KE CSIRT Steps for O365 Application Creation (2025-02-08)](docs/national_ke_csirt_steps_0365_google_workspace_application_creation_20250208.pdf)
 
 ---
 ## Project Structure
