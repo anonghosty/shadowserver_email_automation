@@ -20,7 +20,7 @@ On the First of August 2025, I received a message from the National CSIRT of Ken
 
 For organizations needing to configure an O365 application to interact with Microsoft Graph securely and correctly, CSIRT Kenya also provided a setup guide. You can find the tutorial below:
 
-[National KE CSIRT Steps for O365 Application Creation (2025-02-08)](national_ke_csirt_steps_0365_application_creation_20250208.pdf)
+[National KE CSIRT Steps for O365 Application Creation (2025-02-08)](national_ke_csirt_steps_0365_google_workspace_application_creation_20250208.pdf)
 
 ---
 ---
