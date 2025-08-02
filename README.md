@@ -5,6 +5,16 @@
 **License:** [MIT (Modified - No Resale)](./LICENSE)
 
 ---
+## Professional Contributors
+
+This section acknowledges the institutional input and guidance received during the resolution and mitigation of the O365 and Gmail IMAP issue.
+
+**National CSIRT of Kenya**  
+Provided official communication(cirt@ke-cirt.go.ke), technical mitigation steps(0365-Microsoft Graph), and tutorial documentation(PDF Format).
+
+![National CSIRT of Kenya Logo](national_kenyan_csirt_logo_20250208.jpeg)
+---
+
 ## Documentation 
 https://anonghosty.github.io/shadowserver_email_automation/
 
