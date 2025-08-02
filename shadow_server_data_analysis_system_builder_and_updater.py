@@ -16,10 +16,14 @@ import zipfile
 import tarfile
 import gzip
 import warnings
+import json
 import subprocess
 from io import StringIO
 from datetime import datetime
 from functools import wraps
+from email import message_from_bytes
+from email.header import decode_header
+
 # === Third-party libraries ===
 import aiohttp
 import aiofiles
@@ -36,6 +40,8 @@ from colorama import Fore, Style
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from dotenv import load_dotenv
+from email import message_from_bytes
+from email.header import decode_header
 # === Email parsing ===
 import email
 from email.header import decode_header
@@ -59,6 +65,12 @@ for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, track
         os.makedirs(folder)
 
 #New Implementation Will Clean Up After
+def get_env(key, default=None):
+    value = os.getenv(key, default)
+    if value is None:
+        raise ValueError(f"[ENV Error] Missing environment variable: {key}")
+    return value
+    
 def load_graph_uids():
     if os.path.exists(graph_tracker_path):
         with open(graph_tracker_path, "r") as f:
@@ -206,7 +218,7 @@ def mask_secret(secret):
 # Mask sensitive values
 masked_graph_email     = mask_email(graph_user_email)
 masked_client_secret   = mask_secret(graph_client_secret)
-
+masked_email_address   = mask_email(email_address)
 # Output
 print("\n🔐 Microsoft Graph Configuration:")
 print(f"  - Provider                : {email_provider}")
@@ -215,7 +227,7 @@ print(f"  - Client ID              : {graph_client_id}")
 print(f"  - Client Secret          : {masked_client_secret}")
 print(f"  - Mailbox Email          : {masked_graph_email}")
 
-print("\n📧 Email Configuration:")
+print("\n📧 IMAP Configuration:")
 print(f"  - Mail Host               : {mail_server}")
 print(f"  - Email Address           : {masked_email_address}")
 print(f"  - Email Password          : {'*' * len(password) if password else 'None'}")
