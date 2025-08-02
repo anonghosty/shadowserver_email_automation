@@ -221,8 +221,8 @@ Sequence: Really Important To Observe the sequence so you can build flavors in a
 +---------+     +---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
      │              │               │               │                 │                 │               │
      ▼              ▼               ▼               ▼                 ▼                 ▼               ▼
-Pull Emails   Sort Extensions   Refresh ASN/   Normalize &     Sort by Country    Sort by Service   Ingest into              
-& Extract     Unzip and Extract    WHOIS Info     Parse Reports     (ISO 3166-1)       (Report Type)   Knowledgebase
+Pull Emails   Sort Extensions    Refresh ASN/   Normalize &     Sort by Country    Sort by Service   Ingest into              
+& Extract     Unzip and Extract  WHOIS Info     Parse Reports   (ISO 3166-1)       (Report Type)     Knowledgebase
 Attachments   Reports Advisories
               From Attachments
               Directory
@@ -239,6 +239,7 @@ Attachments   Reports Advisories
      ║    | parse .eml  |   | attachments       |   | attachments         |   ║
      ║    +-------------+   +------------------+   +---------------------+    ║
      ╚════════════════════════════════════════════════════════════════════════╝
+
 
 
 
