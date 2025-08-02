@@ -224,7 +224,6 @@ print("\n🔐 Microsoft Graph Configuration:")
 print(f"  - Provider                : {email_provider}")
 print(f"  - Tenant ID              : {graph_tenant_id}")
 print(f"  - Client ID              : {graph_client_id}")
-print(f"  - Client Secret          : {masked_client_secret}")
 print(f"  - Mailbox Email          : {masked_graph_email}")
 
 print("\n📧 IMAP Configuration:")
