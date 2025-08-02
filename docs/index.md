@@ -15,7 +15,15 @@ layout: default
 This project automates the ingestion, parsing, categorization, and reporting of threat intelligence feeds from [Shadowserver](https://www.shadowserver.org/). It is built for CSIRT teams and analysts looking to streamline Shadowserver report handling and transformation into actionable intelligence.
 
 ---
+## Professional Contributors
 
+This section acknowledges the institutional input and guidance received during the resolution and mitigation of the O365 and Gmail IMAP issue.
+
+**National CSIRT of Kenya**  
+Provided official communication(cirt@ke-cirt.go.ke), technical mitigation steps(0365-Microsoft Graph), and tutorial documentation(PDF Format).
+
+![National CSIRT of Kenya Logo](national_kenyan_csirt_logo_20250208.jpeg)
+---
 ## 🚀 Key Features
 
 - Email attachment ingestion (IMAP Basic Authentication)
@@ -48,15 +56,7 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 ![metadata](metadata_sample.png)
 ---
 
-## Professional Contributors
 
-This section acknowledges the institutional input and guidance received during the resolution and mitigation of the O365 and Gmail IMAP issue.
-
-**National CSIRT of Kenya**  
-Provided official communication(cirt@ke-cirt.go.ke), technical mitigation steps(0365-Microsoft Graph), and tutorial documentation(PDF Format).
-
-![National CSIRT of Kenya Logo](national_kenyan_csirt_logo_20250208.jpeg)
----
 
 ## 📬 Feedback & Contributions
 
