@@ -20,10 +20,11 @@ This project automates the ingestion, parsing, categorization, and reporting of 
 
 This section acknowledges the institutional input and guidance received during the resolution and mitigation issues.
 
-**National CSIRT of Kenya**  
-Provided official communication(cirt@ke-cirt.go.ke), technical mitigation steps(0365-Microsoft Graph), and tutorial documentation(PDF Format).
-
+1. **National CSIRT of Kenya**
 ![National CSIRT of Kenya Logo](national_kenyan_csirt_logo_20250208.jpeg)
+
+###Contribution
+Provided official communication(cirt@ke-cirt.go.ke), technical mitigation steps(0365-Microsoft Graph), and tutorial documentation(PDF Format).
 ---
 ## 🚀 Key Features
 
