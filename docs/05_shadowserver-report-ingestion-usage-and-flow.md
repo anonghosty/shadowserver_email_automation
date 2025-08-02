@@ -2,14 +2,26 @@
 title: 05 Shadowserver Report Ingestion - Usage & Flow
 ---
 # 📥 Shadowserver Report Ingestion - Usage & Flow 
-#(0365 and Google Workspace Usera Kindly Should Kindly See the Solution From Kenyan National CSIRT)
+##(0365 and Google Workspace Usera Kindly Should Kindly See the Solution From Kenyan National CSIRT)
+
 This section explains how to run the Shadowserver ingestion pipeline using the core CLI entry point:  
 **`shadow_server_data_analysis_system_builder_and_updater.py`**
 
 ---
-On the First of August 2025, I received an email from the National CSIRT of Kenya regarding an issue related to O365 and Google Workspace limitations with IMAP. CSIRT Kenya highlighted the issue affecting users on the said platforms and shared a solution which will be implemented. In case you would want to review the details and the solution, here is the document:
+## Update – 1st August 2025
+
+On the First of August 2025, I received an email from the National CSIRT of Kenya regarding an issue related to O365 and Gmail limitations with IMAP. CSIRT Kenya highlighted the issue affecting users on the said platforms and shared a solution which will be implemented. In case you would want to review the details and the solution, here is the document:
 
 [Feedback on KE National CSIRT Implementation of O365 and Gmail (2025-08-02)](feedback_ke_national_csirt_implementation_of_0365_and_gmail_20250802.pdf)
+
+---
+
+## Tutorial – Setting up O365 Application for Microsoft Graph
+
+For organizations needing to configure an O365 application to interact with Microsoft Graph securely and correctly, CSIRT Kenya also provided a setup guide. You can find the tutorial below:
+
+[National KE CSIRT Steps for O365 Application Creation (2025-02-08)](national_ke_csirt_steps_0365_application_creation_20250208.pdf)
+
 ---
 ---
 
