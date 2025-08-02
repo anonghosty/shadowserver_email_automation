@@ -667,6 +667,11 @@ async def main_email_ingestion():
                 else:
                     print(f"\r[Advisories] Skipped (already exists): {file}", end="\r", flush=True)
 
+async def ingest_microsoft_graph():
+    print("⚠️ Microsoft Graph email ingestion is pending implementation.")
+
+async def ingest_google_workspace():
+    print("⚠️ Google Workspace (Gmail API) ingestion is pending implementation.")
 
 
 
@@ -1899,11 +1904,12 @@ async def main():
     service_use_tracker, service_tracker_mode = parse_tracker_flag(flags, "service")
     ingest_use_tracker, ingest_tracker_mode = parse_tracker_flag(flags, "ingest")
     country_use_tracker, country_tracker_mode = parse_tracker_flag(flags, "country")
-    # === Task descriptions ===
+
+    # === Task Descriptions ===
     print("\n🛠️  Selected Tasks:")
     for task in tasks:
         if task == "email":
-            print("• email   → Pull Emails Including Shadowserver  Reports, Save As EML and Extract Attachments")
+            print("• email   → Pull Emails Including Shadowserver Reports, Save As EML and Extract Attachments")
         elif task == "refresh":
             print("• refresh → Refresh Stored ASN/WHOIS Metadata from Previous Shadowserver Reports")
         elif task == "process":
@@ -1920,14 +1926,34 @@ async def main():
             print(f"❌ Unknown task '{task}' — valid options are: email, refresh, process, country, service, ingest, all")
             sys.exit(1)
 
+    # === Tracker Configuration Summary ===
     print("\n📦 Tracker Configuration:")
     print(f"• service  → {'ENABLED' if service_use_tracker else 'DISABLED'} ({service_tracker_mode.upper()} mode)")
     print(f"• ingest   → {'ENABLED' if ingest_use_tracker else 'DISABLED'} ({ingest_tracker_mode.upper()} mode)")
     print(f"• country  → {'ENABLED' if country_use_tracker else 'DISABLED'} ({country_tracker_mode.upper()} mode)\n")
 
+    # === Email Source Selection (for both 'email' and 'all') ===
+    async def handle_email_ingestion():
+        print("\n📥 Select email ingestion method:")
+        print("1. IMAP (e.g., Shadowserver inbox)")
+        print("2. Microsoft Graph (Microsoft 365)")
+        print("3. Google Workspace (Gmail API)")
+
+        selected = input("Enter option [1-3]: ").strip()
+        if selected == "1":
+            await main_email_ingestion_only()
+        elif selected == "2":
+            print("[TODO] Microsoft Graph ingestion not implemented yet.")
+            await ingest_microsoft_graph()
+        elif selected == "3":
+            print("[TODO] Google Workspace ingestion not implemented yet.")
+            await ingest_google_workspace()
+        else:
+            print("❌ Invalid option. Skipping email task.")
+
     # === Execute all tasks ===
     if "all" in tasks:
-        await main_email_ingestion_only()
+        await handle_email_ingestion()
         await main_refresh_shadowserver_whois_only()
         await main_shadowserver_processing_only()
         await main_sort_country_code_only(use_tracker=country_use_tracker, country_tracker_mode=country_tracker_mode)
@@ -1938,7 +1964,7 @@ async def main():
     # === Execute selected tasks ===
     for task in tasks:
         if task == "email":
-            await main_email_ingestion_only()
+            await handle_email_ingestion()
         elif task == "refresh":
             await main_refresh_shadowserver_whois_only()
         elif task == "process":
