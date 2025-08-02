@@ -1,6 +1,7 @@
 # Shadowserver Report Ingestion & Intelligence Toolkit
 
 **Author:** Ike Owuraku Amponsah\
+**Contributors:** KeCIRT\
 **LinkedIn:** [https://www.linkedin.com/in/iowuraku](https://www.linkedin.com/in/iowuraku)\
 **License:** [MIT (Modified - No Resale)](./LICENSE)
 
