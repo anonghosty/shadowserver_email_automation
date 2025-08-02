@@ -807,7 +807,7 @@ async def ingest_microsoft_graph():
                     print(f"[{i}] ❌ Error: {e}")
 
                 count += 1
-                if count == 16:
+                if count == 5:
                     await asyncio.sleep(1)
                     count = 0
 
