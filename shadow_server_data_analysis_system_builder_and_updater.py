@@ -763,7 +763,6 @@ async def ingest_microsoft_graph():
             exported_uids = load_graph_uids()
             print(f"[Tracker] Loaded {len(exported_uids)} previously exported UIDs.")
 
-            attachments_dir = "attachments_documents_backup"
             os.makedirs(attachments_dir, exist_ok=True)
 
             count = 0
