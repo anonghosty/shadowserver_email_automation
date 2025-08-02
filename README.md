@@ -235,7 +235,8 @@ Attachments   Reports Advisories
 
 python3 shadow_server_data_analysis_system_builder_and_updater.py [email|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]
 
-email   → Pull Emails Including Shadowserver Reports, Save as EML, and Extract Attachments  
+email   → Pull Emails Including Shadowserver Reports, Save as EML, and Extract Attachments
+migrate → Sort Extensions, Unzip and Extract. Reports advisories from attachments directory
 refresh → Refresh Stored ASN/WHOIS data from Previous Shadowserver Reports  
 process → Parse and Normalize Shadowserver CSV/JSON Files  
 country → Sort Processed Reports by Country Code (based on IP WHOIS geolocation)  
