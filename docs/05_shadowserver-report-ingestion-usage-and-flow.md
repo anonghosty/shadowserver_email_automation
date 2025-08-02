@@ -2,7 +2,7 @@
 title: 05 Shadowserver Report Ingestion - Usage & Flow
 ---
 # 📥 Shadowserver Report Ingestion - Usage & Flow 
-##(0365 and Google Workspace Usera Kindly Should Kindly See the Solution From Kenyan National CSIRT)
+(0365 and Google Workspace Usera Kindly Should Kindly See the Solution From Kenyan National CSIRT)
 
 This section explains how to run the Shadowserver ingestion pipeline using the core CLI entry point:  
 **`shadow_server_data_analysis_system_builder_and_updater.py`**
