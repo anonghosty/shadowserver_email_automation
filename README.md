@@ -227,18 +227,13 @@ Attachments   Reports Advisories
               From Attachments
               Directory
 
+📬 Email Sub-Methods
+| Method             | Description                                 |
+|--------------------|---------------------------------------------|
+| **IMAP**           | Connects to mailbox directly and parses `.eml` attachments. |
+| **Microsoft Graph**| Uses OAuth2 to access mail via Microsoft 365 Graph API. |
+| **Google Workspace**| Authenticates with Gmail API to retrieve attachments. |
 
-     ╔════════════════════════════════════════════════════════════════════════╗
-     ║                       Email Ingestion Sub-Methods                      ║
-     ║                                                     TODO               ║
-     ║    +-------------+   +------------------+   +---------------------+    ║
-     ║    |    IMAP     |   | Microsoft Graph  |   |  Google Workspace   |    ║
-     ║    +-------------+   +------------------+   +---------------------+    ║
-     ║    | Connect to  |   | Pull via OAuth2  |   | Use Gmail API to    |    ║
-     ║    | mailbox and |   | token + REST API |   | fetch & parse email |    ║
-     ║    | parse .eml  |   | attachments       |   | attachments         |   ║
-     ║    +-------------+   +------------------+   +---------------------+    ║
-     ╚════════════════════════════════════════════════════════════════════════╝
 
 
 
