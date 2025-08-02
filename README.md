@@ -216,14 +216,30 @@ This script will:
 ```bash
 Sequence: Really Important To Observe the sequence so you can build flavors in automation
 
-+---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
-|  email  | --> | refresh | --> | process  | --> |  country  | --> |  service  | --> | ingest |
-+---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
-     │              │               │                 │                 │               │
-     ▼              ▼               ▼                 ▼                 ▼               ▼
- Pull Emails   Refresh ASN/    Normalize &     Sort by Country    Sort by Service   Ingest into
- & Extract     WHOIS Info     Parse Reports     (ISO 3166-1)       (Report Type)   Knowledgebase
-Attachments
++---------+     +---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
+|  email  | --> | migrate | --> | refresh | --> | process  | --> |  country  | --> |  service  | --> | ingest |
++---------+     +---------+     +---------+     +----------+     +-----------+     +-----------+     +--------+
+     │              │               │               │                 │                 │               │
+     ▼              ▼               ▼               ▼                 ▼                 ▼               ▼
+Pull Emails   Sort Extensions   Refresh ASN/   Normalize &     Sort by Country    Sort by Service   Ingest into              
+& Extract     Unzip and Extract    WHOIS Info     Parse Reports     (ISO 3166-1)       (Report Type)   Knowledgebase
+Attachments   Reports Advisories
+              From Attachments
+              Directory
+
+
+     ╔════════════════════════════════════════════════════════════════════════╗
+     ║                       Email Ingestion Sub-Methods                      ║
+     ║                                                     TODO               ║
+     ║    +-------------+   +------------------+   +---------------------+    ║
+     ║    |    IMAP     |   | Microsoft Graph  |   |  Google Workspace   |    ║
+     ║    +-------------+   +------------------+   +---------------------+    ║
+     ║    | Connect to  |   | Pull via OAuth2  |   | Use Gmail API to    |    ║
+     ║    | mailbox and |   | token + REST API |   | fetch & parse email |    ║
+     ║    | parse .eml  |   | attachments       |   | attachments         |   ║
+     ║    +-------------+   +------------------+   +---------------------+    ║
+     ╚════════════════════════════════════════════════════════════════════════╝
+
 
 
 python3 shadow_server_data_analysis_system_builder_and_updater.py [email|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]
