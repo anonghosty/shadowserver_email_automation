@@ -23,7 +23,11 @@ Key features include:
 - Chrome + Selenium automation for scraping report metadata
 
 ---
+---
+Update: On the First of August 2025, I received an email from the National CSIRT of Kenya regarding an issue related to O365 and Google Workspace limitations with IMAP. CSIRT Kenya highlighted the issue affecting users on the said platforms and shared a solution which will be implemented. In case you would want to review the details and the solution, here is the document:
 
+[Feedback on KE National CSIRT Implementation of O365 and Gmail (2025-08-02)](feedback_ke_national_csirt_implementation_of_0365_and_gmail_20250802.pdf)
+---
 ## Project Structure
 
 MongoDB is required. See: [https://www.howtoforge.com/tutorial/install-mongodb-on-ubuntu/](https://www.howtoforge.com/tutorial/install-mongodb-on-ubuntu/)\
