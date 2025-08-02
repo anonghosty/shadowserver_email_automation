@@ -20,13 +20,13 @@ import subprocess
 from io import StringIO
 from datetime import datetime
 from functools import wraps
-
 # === Third-party libraries ===
 import aiohttp
 import aiofiles
 import py7zr
 import rarfile
 import colorama
+import asyncio
 import pandas as pd
 from pymongo import MongoClient, InsertOne
 from pymongo.errors import BulkWriteError
@@ -44,10 +44,66 @@ from email.header import decode_header
 load_dotenv(dotenv_path=".env", override=True)
 timestamp_now = datetime.now().strftime("%Y-%m-%d_%H%M")
 log_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+GRAPH_TOKEN_URL = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+GRAPH_API_BASE = "https://graph.microsoft.com/v1.0"
+# ✅ Define base directories first
+attachments_dir = "attachments_documents_backup"
+metadata_dir = "received_emails_metadata"
+eml_export_dir = "exported_eml"
+logging_dir = "logging"
+tracker_dir = "file_tracking_system"
 
+# Folder creation logic (Claire will handle the imports)
+for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
+#New Implementation Will Clean Up After
+def load_graph_uids():
+    if os.path.exists(graph_tracker_path):
+        with open(graph_tracker_path, "r") as f:
+            return set(json.load(f))
+    return set()
+    
+def save_graph_uids(uids):
+    with open(graph_tracker_path, "w") as f:
+        json.dump(sorted(list(uids)), f)
 
+# === OAuth2 Token ===
+async def get_graph_token(session):
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": get_env("graph_client_id"),
+        "client_secret": get_env("graph_client_secret"),
+        "scope": "https://graph.microsoft.com/.default",
+    }
+    tenant_id = get_env("graph_tenant_id")
+    token_url = GRAPH_TOKEN_URL.format(tenant_id=tenant_id)
 
+    async with session.post(token_url, data=data) as resp:
+        if resp.status != 200:
+            raise Exception(f"Token fetch failed: {resp.status}")
+        return (await resp.json())["access_token"]
+        
+# === Email Fetch ===
+async def fetch_messages(session, token, user_email):
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"{GRAPH_API_BASE}/users/{user_email}/mailFolders/inbox/messages?$top=100"
+    async with session.get(url, headers=headers) as resp:
+        if resp.status != 200:
+            raise Exception(f"Message list fetch failed: {resp.status}")
+        return (await resp.json()).get("value", [])
+
+async def fetch_raw_message(session, token, message_id):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/octet-stream"
+    }
+    url = f"{GRAPH_API_BASE}/me/messages/{message_id}/$value"
+    async with session.get(url, headers=headers) as resp:
+        if resp.status != 200:
+            raise Exception(f"Raw message fetch failed: {resp.status}")
+        return await resp.read()
 
 
 # === MongoDB Config ===
@@ -127,12 +183,44 @@ mail_server = os.getenv("mail_server")
 email_address = os.getenv("email_address")
 password = os.getenv("email_password")
 imap_folder = os.getenv("imap_shadowserver_folder_or_email_processing_folder", "inbox").strip('"')
+# Retrieve from environment
+email_provider       = os.getenv("email_provider", "graph")
+graph_tenant_id      = os.getenv("graph_tenant_id", "unknown-tenant")
+graph_client_id      = os.getenv("graph_client_id", "unknown-client-id")
+graph_client_secret  = os.getenv("graph_client_secret", "")
+graph_user_email     = os.getenv("graph_user_email", "user@example.com")
+
+
+def mask_email(email):
+    if "@" in email:
+        local, domain = email.split("@", 1)
+        masked_local = "*" * len(local)
+        return f"{masked_local}@{domain}"
+    return "*" * 5
+
+def mask_secret(secret):
+    return "*" * len(secret) if secret else "None"
+
+
+
+# Mask sensitive values
+masked_graph_email     = mask_email(graph_user_email)
+masked_client_secret   = mask_secret(graph_client_secret)
+
+# Output
+print("\n🔐 Microsoft Graph Configuration:")
+print(f"  - Provider                : {email_provider}")
+print(f"  - Tenant ID              : {graph_tenant_id}")
+print(f"  - Client ID              : {graph_client_id}")
+print(f"  - Client Secret          : {masked_client_secret}")
+print(f"  - Mailbox Email          : {masked_graph_email}")
 
 print("\n📧 Email Configuration:")
 print(f"  - Mail Host               : {mail_server}")
-print(f"  - Email Address           : {email_address}")
+print(f"  - Email Address           : {masked_email_address}")
 print(f"  - Email Password          : {'*' * len(password) if password else 'None'}")
 print(f"  - IMAP Folder to Monitor  : {imap_folder}")
+
 
 
 # === Regex Patterns ===
@@ -333,17 +421,6 @@ def extract_archive(file_path, ext, output_dir):
 async def main_email_ingestion():
     print("Attempting to establish connection to the mail IMAP server...")
 
-    # ✅ Define base directories first
-    attachments_dir = "attachments_documents_backup"
-    metadata_dir = "received_emails_metadata"
-    eml_export_dir = "exported_eml"
-    logging_dir = "logging"
-    tracker_dir = "file_tracking_system"
-
-    # Folder creation logic (Claire will handle the imports)
-    for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
-        if not os.path.exists(folder):
-            os.makedirs(folder)
 
 
     # ✅ Ensure folders exist
@@ -529,6 +606,9 @@ async def main_email_ingestion():
         print(f"[General Error] {e}")
 
 
+async def attachment_sorting_shadowserver_report_migration():
+    print("\n[Processor] Starting attachment sorting and Shadowserver report migration...\n")
+
     # === SORT ATTACHMENTS BY EXTENSION ===
     sorted_base = "sorted_attachments"
     ensure_dir(sorted_base)
@@ -546,12 +626,8 @@ async def main_email_ingestion():
             if not os.path.exists(dst):
                 shutil.move(src, dst)
                 print(f"\r[Sort] Processing: {ext_folder}", end="\r", flush=True)
-
-                #print(f"\r[Sort] Moved: {file} → {ext_folder}", end="\r", flush=True)
-
             else:
                 print(f"\r[Sort] already sorted: {file}", end="\r", flush=True)
-
 
     # === UNZIP & ARCHIVE HANDLING ===
     unzipped_dir = "unzipped_backup"
@@ -575,7 +651,6 @@ async def main_email_ingestion():
         for file in os.listdir(sorted_folder):
             if file in archive_trackers[ext]:
                 print(f"\r[Unzipper] already extracted: {file}", end="\r", flush=True)
-
                 continue
 
             archive_path = os.path.join(sorted_folder, file)
@@ -601,7 +676,6 @@ async def main_email_ingestion():
             else:
                 print(f"\r[Unzipper][ERROR] Failed to extract: {file}", end="\r", flush=True)
 
-
     for ext, path in archive_tracker_paths.items():
         save_tracker(path, archive_trackers[ext])
 
@@ -621,11 +695,9 @@ async def main_email_ingestion():
                 if not os.path.exists(dest_path):
                     shutil.move(src_path, dest_path)
                     print(f"\r[Shadowserver] Moved: {file} → {shadowserver_dest}", end="\r", flush=True)
-
                 else:
                     print(f"\r[Shadowserver] Skipped (already exists): {file}", end="\r", flush=True)
 
-                    
     # ==== DISSEMINATED ADVISORY CSV RELOCATION ====
     advisories_base = "dissemenated_advisories_system"
     advisories_dest = os.path.join(advisories_base, "attached_csv_reports")
@@ -643,10 +715,8 @@ async def main_email_ingestion():
                 if not os.path.exists(dest_path):
                     shutil.move(src_path, dest_path)
                     print(f"\r[Advisories] Moved: {file} → {advisories_dest}", end="\r", flush=True)
-
                 else:
                     print(f"\r[Advisories] Skipped (already exists): {file}", end="\r", flush=True)
-
 
     # ==== DISSEMINATED ADVISORY PDF RELOCATION ====
     advisory_pdf_dest = os.path.join(advisories_base, "attached_pdf_reports")
@@ -663,12 +733,80 @@ async def main_email_ingestion():
                 if not os.path.exists(dest_path):
                     shutil.move(src_path, dest_path)
                     print(f"\r[Advisories] Moved: {file} → {advisory_pdf_dest}", end="\r", flush=True)
-
                 else:
                     print(f"\r[Advisories] Skipped (already exists): {file}", end="\r", flush=True)
 
+
 async def ingest_microsoft_graph():
-    print("⚠️ Microsoft Graph email ingestion is pending implementation.")
+    print("🔐 Authenticating with Microsoft Graph API...")
+    async with aiohttp.ClientSession() as session:
+        try:
+            token = await get_graph_token(session)
+            user_email = get_env("graph_user_email")
+            print(f"📬 Fetching messages for {user_email}...")
+
+            messages = await fetch_messages(session, token, user_email)
+            print(f"[Graph] Retrieved {len(messages)} messages.")
+
+            exported_uids = load_graph_uids()
+            print(f"[Tracker] Loaded {len(exported_uids)} previously exported UIDs.")
+
+            attachments_dir = "attachments_documents_backup"
+            os.makedirs(attachments_dir, exist_ok=True)
+
+            count = 0
+            for i, msg in enumerate(messages, 1):
+                message_id = msg["id"]
+                internet_id = msg.get("internetMessageId")
+                uid = internet_id or message_id
+
+                if uid in exported_uids:
+                    print(f"[{i}] Skipping already processed UID: {uid}")
+                    continue
+
+                print(f"[{i}] Fetching message UID: {uid}")
+                try:
+                    raw_bytes = await fetch_raw_message(session, token, message_id)
+                    email_msg = message_from_bytes(raw_bytes)
+
+                    subject = email_msg.get("Subject", "")
+                    sender = email_msg.get("From", "")
+                    date = email_msg.get("Date", "")
+                    print(f"[{i}] → Subject: {subject} | From: {sender} | Date: {date}")
+
+                    for part in email_msg.walk():
+                        if part.get_content_maintype() == "multipart" or not part.get("Content-Disposition"):
+                            continue
+
+                        filename = part.get_filename()
+                        if filename:
+                            decoded_filename = decode_header(filename)[0][0]
+                            if isinstance(decoded_filename, bytes):
+                                decoded_filename = decoded_filename.decode('utf-8', errors='replace')
+
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                path = os.path.join(attachments_dir, decoded_filename)
+                                with open(path, "wb") as f:
+                                    f.write(payload)
+                                print(f"[{i}] Downloaded: {decoded_filename}")
+
+                    exported_uids.add(uid)
+
+                except Exception as e:
+                    print(f"[{i}] ❌ Error: {e}")
+
+                count += 1
+                if count == 16:
+                    await asyncio.sleep(1)
+                    count = 0
+
+            save_graph_uids(exported_uids)
+            print(f"[Tracker] Saved {len(exported_uids)} total exported UIDs.")
+
+        except Exception as e:
+            print(f"[Graph Error] {e}")
+    
 
 async def ingest_google_workspace():
     print("⚠️ Google Workspace (Gmail API) ingestion is pending implementation.")
@@ -1864,6 +2002,8 @@ async def main_knowledgebase_ingestion_only(use_tracker=False, tracker_mode="man
     print(f"🧠 [Knowledgebase Task] Tracker is {'ENABLED' if use_tracker else 'DISABLED'} ({tracker_mode.upper()} mode)")
     await shadowserver_knowledgebase_ingestion_only(use_tracker=use_tracker, tracker_mode=tracker_mode)
 
+async def main_attachment_sorting_migration_only():
+    await attachment_sorting_shadowserver_report_migration()
 
 # ========== MAIN SELECTOR ==========
 
@@ -1871,7 +2011,7 @@ async def main():
     import re
 
     if len(sys.argv) < 2:
-        print("Usage: python3 shadow_server_data_analysis_system_builder_and_updater.py [email|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]")
+        print("Usage: python3 shadow_server_data_analysis_system_builder_and_updater.py [email|migrate|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]")
         sys.exit(1)
 
     tasks = [arg.lower() for arg in sys.argv[1:] if not arg.startswith("--")]
@@ -1914,16 +2054,18 @@ async def main():
             print("• refresh → Refresh Stored ASN/WHOIS Metadata from Previous Shadowserver Reports")
         elif task == "process":
             print("• process → Parse and Normalize Shadowserver CSV/JSON files")
+        elif task == "migrate":
+            print("• migrate → Sort Attachments, Extract Archives, and Relocate Shadowserver Reports and Advisories From Downloaded Attachment Directory")
         elif task == "country":
             print("• country → Sort Processed Shadowserver Reports by Country Code")
         elif task == "service":
             print("• service → Sort Processed Shadowserver Reports by Detected Service Type via Filename Pattern Analysis")
         elif task == "ingest":
-            print("• ingest  → Ingest Cleaned Shadoverver Data into Knowledgebase as Databases and Collections")
+            print("• ingest  → Ingest Cleaned Shadowserver Data into Knowledgebase as Databases and Collections")
         elif task == "all":
-            print("• all     → Run All Tasks Sequentially (email, refresh, process, country, service, ingest)")
+            print("• all     → Run All Tasks Sequentially (email, refresh, migrate, country, service, ingest)")
         else:
-            print(f"❌ Unknown task '{task}' — valid options are: email, refresh, process, country, service, ingest, all")
+            print(f"❌ Unknown task '{task}' — valid options are: email, refresh, migrate, country, service, ingest, all")
             sys.exit(1)
 
     # === Tracker Configuration Summary ===
@@ -1954,6 +2096,7 @@ async def main():
     # === Execute all tasks ===
     if "all" in tasks:
         await handle_email_ingestion()
+        await main_attachment_sorting_migration_only()
         await main_refresh_shadowserver_whois_only()
         await main_shadowserver_processing_only()
         await main_sort_country_code_only(use_tracker=country_use_tracker, country_tracker_mode=country_tracker_mode)
@@ -1965,6 +2108,8 @@ async def main():
     for task in tasks:
         if task == "email":
             await handle_email_ingestion()
+        elif task == "migrate":
+            await main_attachment_sorting_migration_only()
         elif task == "refresh":
             await main_refresh_shadowserver_whois_only()
         elif task == "process":
@@ -1978,8 +2123,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    import sys
-    import asyncio
     asyncio.run(main())
 
 
