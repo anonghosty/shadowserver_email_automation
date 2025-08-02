@@ -227,12 +227,7 @@ Attachments   Reports Advisories
               From Attachments
               Directory
 
-📬 Email Sub-Methods
-| Method             | Description                                 |
-|--------------------|---------------------------------------------|
-| **IMAP**           | Connects to mailbox directly and parses `.eml` attachments. |
-| **Microsoft Graph**| Uses OAuth2 to access mail via Microsoft 365 Graph API. |
-| **Google Workspace**| Authenticates with Gmail API to retrieve attachments. |
+
 
 
 
@@ -247,6 +242,13 @@ country → Sort Processed Reports by Country Code (based on IP WHOIS geolocatio
 service → Sort Processed Reports by Detected Service Type (via Filename Pattern Analysis)  
 ingest  → Ingest Cleaned Shadowserver Data into the Knowledgebase (Databases & Collections)
 ```
+📬 Email Sub-Methods
+| Method             | Description                                 |
+|--------------------|---------------------------------------------|
+| **IMAP**           | Connects to mailbox directly and parses `.eml` attachments. |
+| **Microsoft Graph**| Uses OAuth2 to access mail via Microsoft 365 Graph API. |
+| **Google Workspace**| Authenticates with Gmail API to retrieve attachments. |
+
 ### 🧭 Task Flow When Using `all`
 
 ```text
@@ -283,7 +285,12 @@ python3 shadow_server_data_analysis_system_builder_and_updater.py refresh countr
 
 
 ```
----
+| #  | Method             | Description                                                                 |
+|----|--------------------|-----------------------------------------------------------------------------|
+| 1  | **IMAP**           | Connects directly to mailbox via IMAP, extracts `.eml`, and saves attachments. |
+| 2  | **Microsoft Graph**| Uses Microsoft Graph API with OAuth2 for inbox access and attachment parsing. |
+| 3  | **Google Workspace**| Accesses Gmail API with OAuth2 credentials to retrieve and extract files.     |
+
 
 ## Scrape Shadowserver Report Metadata (Run Before Report Generation)
 
