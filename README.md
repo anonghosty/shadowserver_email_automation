@@ -11,7 +11,7 @@
 This section acknowledges the institutional input and guidance received during the resolution and mitigation issues.
 
 1. **National CIRT of Kenya**  
-   ![National CSIRT of Kenya Logo](docs/national_kenyan_csirt_logo_20250208.jpeg)  
+   ![National CIRT of Kenya Logo](docs/national_kenyan_csirt_logo_20250208.jpeg)  
    **Contribution:** Provided official communication (cirt@ke-cirt.go.ke), technical mitigation steps (0365 – Microsoft Graph, Google Workspace), and tutorial documentation (PDF format).
    **Update** On August 3rd, the KeCIRT team conducted a dedicated troubleshooting session to address persistent issues related to the graph option. After a comprehensive review and collaborative debugging, the underlying bugs were successfully identified and resolved. The graph functionality is now fully operational and performing as expected.
 ---
@@ -37,7 +37,7 @@ Key features include:
 ---
 ## Update – 1st August 2025
 
-On the First of August 2025, I received a message from the National CSIRT of Kenya regarding an issue related to O365 and Gmail limitations with IMAP. CSIRT Kenya highlighted the issue affecting users on the said platforms and shared a solution which will be implemented. In case you would want to review the details and the solution, here is the document:
+On the First of August 2025, I received a message from the National CIRT of Kenya regarding an issue related to O365 and Gmail limitations with IMAP. CSIRT Kenya highlighted the issue affecting users on the said platforms and shared a solution which will be implemented. In case you would want to review the details and the solution, here is the document:
 
 [Feedback on KE National CSIRT Implementation of O365 and Gmail (2025-08-02)](docs/feedback_ke_national_csirt_implementation_of_0365_and_gmail_20250802.pdf)
 
