@@ -23,6 +23,7 @@ from datetime import datetime
 from functools import wraps
 from email import message_from_bytes
 from email.header import decode_header
+from urllib.parse import quote_plus
 
 # === Third-party libraries ===
 import aiohttp
@@ -58,7 +59,7 @@ metadata_dir = "received_emails_metadata"
 eml_export_dir = "exported_eml"
 logging_dir = "logging"
 tracker_dir = "file_tracking_system"
-
+graph_uid_tracker_path = os.path.join(tracker_dir, "graph_uid_tracker.json")
 # Folder creation logic (Claire will handle the imports)
 for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
     if not os.path.exists(folder):
@@ -160,9 +161,13 @@ print(f"  - Host           : {mongo_host}")
 print(f"  - Port           : {mongo_port}")
 
 #========= DB USER ROLES DIAGNOSTIC RUN ===========
-uri = f"mongodb://{mongo_username}:{mongo_password}@{mongo_host}:{mongo_port}/?authSource={mongo_auth_source}"
+
+mongo_encoded_user = quote_plus(mongo_username)
+mongo_encoded_pass = quote_plus(mongo_password)
+uri = f"mongodb://{mongo_encoded_user}:{mongo_encoded_pass}@{mongo_host}:{mongo_port}/?authSource={mongo_auth_source}"
 client = MongoClient(uri)
 admin_db = client[mongo_auth_source]
+
 
 try:
     user_data = admin_db.command("usersInfo", {"user": target_user, "db": target_db})
