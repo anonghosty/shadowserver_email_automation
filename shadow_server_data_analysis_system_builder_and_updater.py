@@ -27,6 +27,7 @@ from email.header import decode_header
 from urllib.parse import quote_plus
 
 # === Third-party libraries ===
+import msal
 import aiohttp
 import aiofiles
 import py7zr
@@ -34,7 +35,6 @@ import rarfile
 import colorama
 import asyncio
 import pandas as pd
-from msal import ConfidentialClientApplication
 from pymongo import MongoClient, InsertOne
 from pymongo.errors import BulkWriteError
 from pymongo.errors import OperationFailure
