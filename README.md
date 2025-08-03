@@ -41,6 +41,9 @@ On the First of August 2025, I received a message from the National CIRT of Keny
 
 [Feedback on KE National CSIRT Implementation of O365 and Gmail (2025-08-02)](docs/feedback_ke_national_csirt_implementation_of_0365_and_gmail_20250802.pdf)
 
+## Update - 3rd August 2025 
+
+After the KeCIRT troubleshooting meeting another implementation is to be done where emails without attachments will be pull via link in the message body for the Microsoft Graph option just as the IMAP option does.
 ---
 
 ## Tutorial – Setting up O365 Application for Microsoft Graph
