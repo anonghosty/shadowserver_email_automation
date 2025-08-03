@@ -8,7 +8,6 @@ import ssl
 import csv
 import json
 import time
-import datetime
 import shutil
 import asyncio
 import hashlib
@@ -20,6 +19,7 @@ import warnings
 import json
 import subprocess
 import requests
+from datetime import datetime
 from io import StringIO
 from datetime import datetime
 from functools import wraps
