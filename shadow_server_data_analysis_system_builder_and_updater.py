@@ -26,6 +26,7 @@ from email.header import decode_header
 from urllib.parse import quote_plus
 
 # === Third-party libraries ===
+import msal
 import aiohttp
 import aiofiles
 import py7zr
@@ -107,20 +108,28 @@ def save_graph_uids(uids):
         json.dump(sorted(list(uids)), f)
 
 # === OAuth2 Token ===
-async def get_graph_token(session):
-    data = {
-        "grant_type": "client_credentials",
-        "client_id": get_env("graph_client_id"),
-        "client_secret": get_env("graph_client_secret"),
-        "scope": "https://graph.microsoft.com/.default",
-    }
+def get_msal_token():
+    client_id = get_env("graph_client_id")
+    client_secret = get_env("graph_client_secret")
     tenant_id = get_env("graph_tenant_id")
-    token_url = GRAPH_TOKEN_URL.format(tenant_id=tenant_id)
 
-    async with session.post(token_url, data=data) as resp:
-        if resp.status != 200:
-            raise Exception(f"Token fetch failed: {resp.status}")
-        return (await resp.json())["access_token"]
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    scope = ["https://graph.microsoft.com/.default"]
+
+    app = msal.ConfidentialClientApplication(
+        client_id,
+        authority=authority,
+        client_credential=client_secret
+    )
+
+    result = app.acquire_token_silent(scope, account=None)
+    if not result:
+        result = app.acquire_token_for_client(scopes=scope)
+
+    if "access_token" in result:
+        return result["access_token"]
+    else:
+        raise Exception(f"MSAL token acquisition failed: {result.get('error_description')}")
         
 # === Email Fetch ===
 async def fetch_messages(session, token, user_email):
@@ -781,13 +790,20 @@ async def attachment_sorting_shadowserver_report_migration():
 
 async def ingest_microsoft_graph():
     print("🔐 Authenticating with Microsoft Graph API...")
-    async with aiohttp.ClientSession() as session:
-        try:
-            token = await get_graph_token(session)
-            user_email = get_env("graph_user_email")
-            print(f"📬 Fetching messages for {user_email}...")
 
-            messages = await fetch_messages(session, token, user_email)
+    try:
+        # Get access token
+        access_token = get_msal_token()
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        user_email = get_env("graph_user_email")
+        print(f"📬 Fetching messages for {user_email}...")
+
+        async with aiohttp.ClientSession(headers=headers) as session:
+            messages = await fetch_messages(session, access_token, user_email)
             print(f"[Graph] Retrieved {len(messages)} messages.")
 
             exported_uids = load_graph_uids()
@@ -807,7 +823,7 @@ async def ingest_microsoft_graph():
 
                 print(f"[{i}] Fetching message UID: {uid}")
                 try:
-                    raw_bytes = await fetch_raw_message(session, token, message_id)
+                    raw_bytes = await fetch_raw_message(session, access_token, message_id)
                     email_msg = message_from_bytes(raw_bytes)
 
                     subject = email_msg.get("Subject", "")
@@ -845,8 +861,8 @@ async def ingest_microsoft_graph():
             save_graph_uids(exported_uids)
             print(f"[Tracker] Saved {len(exported_uids)} total exported UIDs.")
 
-        except Exception as e:
-            print(f"[Graph Error] {e}")
+    except Exception as e:
+        print(f"[Graph Error] {e}")
     
 
 async def ingest_google_workspace():
