@@ -84,7 +84,9 @@ Attachments   Reports Advisories
 ## 🧭 Task Flow When Using `all`
 
 ```text
-email   → Pull Emails and Extract Shadowserver Attachments
+email   → Pull Emails Gmail(TODO), Microsoft Graph (New Implementation: KE-CIRT Contribution, IMAP)
+   ↓
+migrate   → Extract Shadowserver Attachments
    ↓
 refresh → Refresh Stored ASN/WHOIS data
    ↓
@@ -95,6 +97,7 @@ country → Sort by IP Country Code (ISO 3166-1)
 service → Sort by Shadowserver Report Type Patterns
    ↓
 ingest  → Ingest Parsed Data into Local/Cloud Knowledgebase (Mongodb Instance)
+
 ```
 
 ---
@@ -104,6 +107,9 @@ ingest  → Ingest Parsed Data into Local/Cloud Knowledgebase (Mongodb Instance)
 ```bash
 # Ingest emails only
 python3 shadow_server_data_analysis_system_builder_and_updater.py email
+
+# Reset Email Selection
+python3 shadow_server_data_analysis_system_builder_and_updater.py email --reset-email-method
 
 # Run full pipeline with auto tracker
 python3 shadow_server_data_analysis_system_builder_and_updater.py all --tracker=auto
