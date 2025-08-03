@@ -786,8 +786,8 @@ async def ingest_microsoft_graph():
 
     # === Load UID tracker ===
     os.makedirs(tracker_dir, exist_ok=True)
-    if os.path.exists(graph_uid_tracker_path):
-        with open(graph_uid_tracker_path, "r") as f:
+    if os.path.exists(graph_tracker_path):
+        with open(graph_tracker_path, "r") as f:
             seen_uids = set(json.load(f))
     else:
         seen_uids = set()
@@ -848,7 +848,7 @@ async def ingest_microsoft_graph():
     # === Save updated UID tracker ===
     if new_uids:
         seen_uids.update(new_uids)
-        with open(graph_uid_tracker_path, "w") as f:
+        with open(graph_tracker_path, "w") as f:
             json.dump(sorted(list(seen_uids)), f)
         print(f"📝 Saved {len(new_uids)} new UID(s) to tracker.")
     else:
