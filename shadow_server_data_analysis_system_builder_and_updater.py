@@ -18,6 +18,7 @@ import gzip
 import warnings
 import json
 import subprocess
+import requests
 from io import StringIO
 from datetime import datetime
 from functools import wraps
@@ -26,7 +27,6 @@ from email.header import decode_header
 from urllib.parse import quote_plus
 
 # === Third-party libraries ===
-import msal
 import aiohttp
 import aiofiles
 import py7zr
@@ -34,6 +34,7 @@ import rarfile
 import colorama
 import asyncio
 import pandas as pd
+from msal import ConfidentialClientApplication
 from pymongo import MongoClient, InsertOne
 from pymongo.errors import BulkWriteError
 from pymongo.errors import OperationFailure
@@ -107,29 +108,6 @@ def save_graph_uids(uids):
     with open(graph_tracker_path, "w") as f:
         json.dump(sorted(list(uids)), f)
 
-# === OAuth2 Token ===
-def get_msal_token():
-    client_id = get_env("graph_client_id")
-    client_secret = get_env("graph_client_secret")
-    tenant_id = get_env("graph_tenant_id")
-
-    authority = f"https://login.microsoftonline.com/{tenant_id}"
-    scope = ["https://graph.microsoft.com/.default"]
-
-    app = msal.ConfidentialClientApplication(
-        client_id,
-        authority=authority,
-        client_credential=client_secret
-    )
-
-    result = app.acquire_token_silent(scope, account=None)
-    if not result:
-        result = app.acquire_token_for_client(scopes=scope)
-
-    if "access_token" in result:
-        return result["access_token"]
-    else:
-        raise Exception(f"MSAL token acquisition failed: {result.get('error_description')}")
         
 # === Email Fetch ===
 async def fetch_messages(session, token, user_email):
@@ -270,9 +248,6 @@ print(f"  - Email Address           : {masked_email_address}")
 print(f"  - Email Password          : {'*' * len(password) if password else 'None'}")
 print(f"  - IMAP Folder to Monitor  : {imap_folder}")
 
-#Microsoft Graph Token Uri and Base/Scope
-GRAPH_TOKEN_URL = "https://graph.microsoft.com/v1.0/users/{graph_user_email}/mailFolders/Inbox/messages?"
-GRAPH_API_BASE = "https://graph.microsoft.com/.default"
 
 # === Regex Patterns ===
 raw_fallback = os.getenv("geo_csv_fallback_regex", "")
@@ -790,83 +765,96 @@ async def attachment_sorting_shadowserver_report_migration():
 
 async def ingest_microsoft_graph():
     print("🔐 Authenticating with Microsoft Graph API...")
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    scope = ["https://graph.microsoft.com/.default"]
 
-    try:
-        # Get access token
-        access_token = get_msal_token()
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
+    app = msal.ConfidentialClientApplication(
+        client_id=client_id,
+        authority=authority,
+        client_credential=client_secret
+    )
 
-        user_email = get_env("graph_user_email")
-        print(f"📬 Fetching messages for {user_email}...")
+    result = app.acquire_token_silent(scope, account=None)
+    if not result:
+        result = app.acquire_token_for_client(scopes=scope)
 
-        async with aiohttp.ClientSession(headers=headers) as session:
-            messages = await fetch_messages(session, access_token, user_email)
-            print(f"[Graph] Retrieved {len(messages)} messages.")
+    if "access_token" not in result:
+        print("❌ Failed to obtain access token:", result.get("error_description"))
+        return
 
-            exported_uids = load_graph_uids()
-            print(f"[Tracker] Loaded {len(exported_uids)} previously exported UIDs.")
+    print("✅ Successfully authenticated to Microsoft Graph.")
 
-            os.makedirs(attachments_dir, exist_ok=True)
+    # === Load UID tracker ===
+    os.makedirs(tracker_dir, exist_ok=True)
+    if os.path.exists(graph_uid_tracker_path):
+        with open(graph_uid_tracker_path, "r") as f:
+            seen_uids = set(json.load(f))
+    else:
+        seen_uids = set()
 
-            count = 0
-            for i, msg in enumerate(messages, 1):
-                message_id = msg["id"]
-                internet_id = msg.get("internetMessageId")
-                uid = internet_id or message_id
+    # === Fetch Emails ===
+    headers = {
+        "Authorization": f"Bearer {result['access_token']}",
+        "Content-Type": "application/json"
+    }
 
-                if uid in exported_uids:
-                    print(f"[{i}] Skipping already processed UID: {uid}")
-                    continue
+    graph_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_email}/mailFolders/inbox/messages?$top=200&$orderby=receivedDateTime desc"
+    response = requests.get(graph_endpoint, headers=headers)
 
-                print(f"[{i}] Fetching message UID: {uid}")
-                try:
-                    raw_bytes = await fetch_raw_message(session, access_token, message_id)
-                    email_msg = message_from_bytes(raw_bytes)
+    if response.status_code != 200:
+        print(f"❌ Error fetching emails: {response.status_code} - {response.text}")
+        return
 
-                    subject = email_msg.get("Subject", "")
-                    sender = email_msg.get("From", "")
-                    date = email_msg.get("Date", "")
-                    print(f"[{i}] → Subject: {subject} | From: {sender} | Date: {date}")
+    emails = response.json().get("value", [])
+    print(f"📬 Retrieved {len(emails)} email(s) from inbox.")
 
-                    for part in email_msg.walk():
-                        if part.get_content_maintype() == "multipart" or not part.get("Content-Disposition"):
-                            continue
+    new_uids = set()
 
-                        filename = part.get_filename()
-                        if filename:
-                            decoded_filename = decode_header(filename)[0][0]
-                            if isinstance(decoded_filename, bytes):
-                                decoded_filename = decoded_filename.decode('utf-8', errors='replace')
+    for email_entry in emails:
+        message_id = email_entry.get("id")
+        if message_id in seen_uids:
+            continue  # Skip already processed
 
-                            payload = part.get_payload(decode=True)
-                            if payload:
-                                path = os.path.join(attachments_dir, decoded_filename)
-                                with open(path, "wb") as f:
-                                    f.write(payload)
-                                print(f"[{i}] Downloaded: {decoded_filename}")
+        subject = email_entry.get("subject")
+        sender = email_entry.get("from", {}).get("emailAddress", {}).get("address")
+        received_time = email_entry.get("receivedDateTime")
+        log_time_str = datetime.datetime.utcnow().isoformat()
 
-                    exported_uids.add(uid)
+        print(f"\n📧 Email: '{subject}' from {sender} at {received_time}")
 
-                except Exception as e:
-                    print(f"[{i}] ❌ Error: {e}")
+        # === Fetch MIME Content ===
+        mime_url = f"https://graph.microsoft.com/v1.0/users/{user_email}/messages/{message_id}/$value"
+        raw_response = requests.get(mime_url, headers=headers)
 
-                count += 1
-                if count == 16:
-                    await asyncio.sleep(1)
-                    count = 0
+        if raw_response.status_code != 200:
+            print(f"⚠️ Failed to get MIME content for message {message_id}: {raw_response.status_code}")
+            continue
 
-            save_graph_uids(exported_uids)
-            print(f"[Tracker] Saved {len(exported_uids)} total exported UIDs.")
+        raw_email = raw_response.content
+        eml_path = os.path.join(eml_export_dir, f"{message_id}.eml")
+        with open(eml_path, "wb") as f:
+            f.write(raw_email)
 
-    except Exception as e:
-        print(f"[Graph Error] {e}")
-    
+        # === Log EML export ===
+        write_log_csv(
+            os.path.join(logging_dir, "eml_exports"),
+            f"eml_export_log_{log_time_str[:10]}.csv",
+            ["timestamp", "uid", "filename", "export_path"],
+            [log_time_str, message_id, f"{message_id}.eml", eml_path]
+        )
 
-async def ingest_google_workspace():
-    print("⚠️ Google Workspace (Gmail API) ingestion is pending implementation.")
+        new_uids.add(message_id)
+
+    # === Save updated UID tracker ===
+    if new_uids:
+        seen_uids.update(new_uids)
+        with open(graph_uid_tracker_path, "w") as f:
+            json.dump(sorted(list(seen_uids)), f)
+        print(f"📝 Saved {len(new_uids)} new UID(s) to tracker.")
+    else:
+        print("ℹ️ No new emails to ingest.")
+
+
 
 
 
