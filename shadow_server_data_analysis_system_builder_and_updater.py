@@ -51,8 +51,7 @@ from email.header import decode_header
 load_dotenv(dotenv_path=".env", override=True)
 timestamp_now = datetime.now().strftime("%Y-%m-%d_%H%M")
 log_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-GRAPH_TOKEN_URL = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
-GRAPH_API_BASE = "https://graph.microsoft.com/v1.0"
+
 # ✅ Define base directories first
 attachments_dir = "attachments_documents_backup"
 metadata_dir = "received_emails_metadata"
@@ -262,7 +261,9 @@ print(f"  - Email Address           : {masked_email_address}")
 print(f"  - Email Password          : {'*' * len(password) if password else 'None'}")
 print(f"  - IMAP Folder to Monitor  : {imap_folder}")
 
-
+#Microsoft Graph Token Uri and Base/Scope
+GRAPH_TOKEN_URL = "https://graph.microsoft.com/v1.0/users/{graph_user_email}/mailFolders/Inbox/messages?"
+GRAPH_API_BASE = "https://graph.microsoft.com/.default"
 
 # === Regex Patterns ===
 raw_fallback = os.getenv("geo_csv_fallback_regex", "")
