@@ -19,7 +19,6 @@ import warnings
 import json
 import subprocess
 import requests
-from datetime import datetime
 from io import StringIO
 from datetime import datetime
 from functools import wraps
@@ -51,7 +50,6 @@ import email
 from email.header import decode_header
 
 # ========== CONSTANTS ==========
-now = datetime.now()
 load_dotenv(dotenv_path=".env", override=True)
 timestamp_now = datetime.now().strftime("%Y-%m-%d_%H%M")
 log_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -820,7 +818,6 @@ async def ingest_microsoft_graph():
         subject = email_entry.get("subject")
         sender = email_entry.get("from", {}).get("emailAddress", {}).get("address")
         received_time = email_entry.get("receivedDateTime")
-        log_time_str = datetime.datetime.utcnow().isoformat()
 
         print(f"\n📧 Email: '{subject}' from {sender} at {received_time}")
 
