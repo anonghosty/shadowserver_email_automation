@@ -765,13 +765,13 @@ async def attachment_sorting_shadowserver_report_migration():
 
 async def ingest_microsoft_graph():
     print("🔐 Authenticating with Microsoft Graph API...")
-    authority = f"https://login.microsoftonline.com/{tenant_id}"
+    authority = f"https://login.microsoftonline.com/{graph_tenant_id}"
     scope = ["https://graph.microsoft.com/.default"]
 
     app = msal.ConfidentialClientApplication(
-        client_id=client_id,
+        client_id=graph_client_id,
         authority=authority,
-        client_credential=client_secret
+        client_credential=graph_client_secret 
     )
 
     result = app.acquire_token_silent(scope, account=None)
@@ -798,7 +798,7 @@ async def ingest_microsoft_graph():
         "Content-Type": "application/json"
     }
 
-    graph_endpoint = f"https://graph.microsoft.com/v1.0/users/{user_email}/mailFolders/inbox/messages?$top=200&$orderby=receivedDateTime desc"
+    graph_endpoint = f"https://graph.microsoft.com/v1.0/users/{graph_user_email}/mailFolders/inbox/messages?$top=200&$orderby=receivedDateTime desc"
     response = requests.get(graph_endpoint, headers=headers)
 
     if response.status_code != 200:
