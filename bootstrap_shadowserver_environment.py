@@ -52,13 +52,14 @@ if not requirements_path.exists():
         "reportlab",
         "selenium",
         "tqdm",
+        "msal",
         "python-dotenv",
     ]
 #    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
-    subprocess.run([sys.executable, "-m", "pip", "install"] + requirements, check=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages"] + requirements, check=True)
 else:
 #    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
-    subprocess.run([sys.executable, "-m", "pip", "install", "-r", str(requirements_path)], check=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages", "-r", str(requirements_path)], check=True)
 
 # === Step 2: Install or update Google Chrome ===
 print("🌐 Checking Google Chrome installation...")
@@ -149,3 +150,4 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
+
