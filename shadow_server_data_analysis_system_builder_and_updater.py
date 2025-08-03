@@ -65,13 +65,20 @@ for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, track
         os.makedirs(folder)
 
 #New Implementation Will Clean Up After
-CONFIG_FILE = "ingestion_config.json"
+CONFIG_DIR = os.path.expanduser("~/.config/email_ingestion")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "ingestion_config.json")
+
+def ensure_config_dir():
+    os.makedirs(CONFIG_DIR, exist_ok=True)
 
 def save_last_choice(option):
+    ensure_config_dir()
     with open(CONFIG_FILE, "w") as f:
         json.dump({"last_selected": option}, f)
 
-def load_last_choice():
+def load_last_choice(force_reset=False):
+    if force_reset:
+        return None
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r") as f:
@@ -81,6 +88,7 @@ def load_last_choice():
         except Exception:
             pass
     return None
+
     
 def get_env(key, default=None):
     value = os.getenv(key, default)
@@ -2043,6 +2051,7 @@ async def main():
 
     tasks = [arg.lower() for arg in sys.argv[1:] if not arg.startswith("--")]
     flags = [arg.lower() for arg in sys.argv[1:] if arg.startswith("--")]
+    force_reset_email = "--reset-email-method" in flags
 
     # === Global tracker override ===
     global_tracker_enabled = False
@@ -2102,8 +2111,11 @@ async def main():
     print(f"• country  → {'ENABLED' if country_use_tracker else 'DISABLED'} ({country_tracker_mode.upper()} mode)\n")
 
     # === Email Source Selection (for both 'email' and 'all') ===
-    async def handle_email_ingestion():
-        selected = load_last_choice()
+    async def handle_email_ingestion(force_reset=False):
+        selected = None
+
+        if not force_reset:
+            selected = load_last_choice(force_reset=force_reset)
 
         if not selected:
             print("\n📥 Select email ingestion method:")
@@ -2129,7 +2141,7 @@ async def main():
     
         # === Execute all tasks ===
     if "all" in tasks:
-        await handle_email_ingestion()
+        await handle_email_ingestion(force_reset=force_reset_email)
         await main_attachment_sorting_migration_only()
         await main_refresh_shadowserver_whois_only()
         await main_shadowserver_processing_only()
@@ -2141,7 +2153,7 @@ async def main():
     # === Execute selected tasks ===
     for task in tasks:
         if task == "email":
-            await handle_email_ingestion()
+            await handle_email_ingestion(force_reset=force_reset_email)
         elif task == "migrate":
             await main_attachment_sorting_migration_only()
         elif task == "refresh":
