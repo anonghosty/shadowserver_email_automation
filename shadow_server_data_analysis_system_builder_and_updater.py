@@ -59,7 +59,7 @@ metadata_dir = "received_emails_metadata"
 eml_export_dir = "exported_eml"
 logging_dir = "logging"
 tracker_dir = "file_tracking_system"
-graph_uid_tracker_path = os.path.join(tracker_dir, "graph_uid_tracker.json")
+graph_tracker_path = os.path.join(tracker_dir, "graph_uid_tracker.json")
 # Folder creation logic (Claire will handle the imports)
 for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
     if not os.path.exists(folder):
