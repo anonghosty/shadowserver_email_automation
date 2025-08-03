@@ -822,7 +822,7 @@ async def ingest_microsoft_graph():
         print(f"\n📧 Email: '{subject}' from {sender} at {received_time}")
 
         # === Fetch MIME Content ===
-        mime_url = f"https://graph.microsoft.com/v1.0/users/{user_email}/messages/{message_id}/$value"
+        mime_url = f"https://graph.microsoft.com/v1.0/users/{graph_user_email}/messages/{message_id}/$value"
         raw_response = requests.get(mime_url, headers=headers)
 
         if raw_response.status_code != 200:
