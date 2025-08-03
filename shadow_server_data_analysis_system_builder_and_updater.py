@@ -51,6 +51,7 @@ import email
 from email.header import decode_header
 
 # ========== CONSTANTS ==========
+now = datetime.now()
 load_dotenv(dotenv_path=".env", override=True)
 timestamp_now = datetime.now().strftime("%Y-%m-%d_%H%M")
 log_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
