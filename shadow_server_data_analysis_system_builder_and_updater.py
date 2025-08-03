@@ -65,6 +65,23 @@ for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, track
         os.makedirs(folder)
 
 #New Implementation Will Clean Up After
+CONFIG_FILE = "ingestion_config.json"
+
+def save_last_choice(option):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump({"last_selected": option}, f)
+
+def load_last_choice():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+                if data.get("last_selected") in {"1", "2", "3"}:
+                    return data["last_selected"]
+        except Exception:
+            pass
+    return None
+    
 def get_env(key, default=None):
     value = os.getenv(key, default)
     if value is None:
@@ -807,7 +824,7 @@ async def ingest_microsoft_graph():
                     print(f"[{i}] ❌ Error: {e}")
 
                 count += 1
-                if count == 5:
+                if count == 16:
                     await asyncio.sleep(1)
                     count = 0
 
@@ -2018,7 +2035,7 @@ async def main_attachment_sorting_migration_only():
 # ========== MAIN SELECTOR ==========
 
 async def main():
-    import re
+
 
     if len(sys.argv) < 2:
         print("Usage: python3 shadow_server_data_analysis_system_builder_and_updater.py [email|migrate|refresh|process|country|service|ingest|all] [--tracker] [--tracker=auto] [--tracker-service=auto|manual|off] [--tracker-ingest=auto|manual|off]")
@@ -2086,12 +2103,21 @@ async def main():
 
     # === Email Source Selection (for both 'email' and 'all') ===
     async def handle_email_ingestion():
-        print("\n📥 Select email ingestion method:")
-        print("1. IMAP (e.g., Shadowserver inbox)")
-        print("2. Microsoft Graph (Microsoft 365)")
-        print("3. Google Workspace (Gmail API)")
+        selected = load_last_choice()
 
-        selected = input("Enter option [1-3]: ").strip()
+        if not selected:
+            print("\n📥 Select email ingestion method:")
+            print("1. IMAP (e.g., Shadowserver inbox)")
+            print("2. Microsoft Graph (Microsoft 365)")
+            print("3. Google Workspace (Gmail API)")
+            selected = input("Enter option [1-3]: ").strip()
+
+            if selected in {"1", "2", "3"}:
+                save_last_choice(selected)
+            else:
+                print("❌ Invalid option. Skipping email task.")
+                return
+
         if selected == "1":
             await main_email_ingestion_only()
         elif selected == "2":
@@ -2100,10 +2126,8 @@ async def main():
         elif selected == "3":
             print("[TODO] Google Workspace ingestion not implemented yet.")
             await ingest_google_workspace()
-        else:
-            print("❌ Invalid option. Skipping email task.")
-
-    # === Execute all tasks ===
+    
+        # === Execute all tasks ===
     if "all" in tasks:
         await handle_email_ingestion()
         await main_attachment_sorting_migration_only()
