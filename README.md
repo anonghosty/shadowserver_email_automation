@@ -253,7 +253,9 @@ ingest  → Ingest Cleaned Shadowserver Data into the Knowledgebase (Databases &
 ### 🧭 Task Flow When Using `all`
 
 ```text
-email   → Pull Emails and Extract Shadowserver Attachments
+email   → Pull Emails Gmail(TODO), Microsoft Graph (New Implementation: KE-CIRT Contribution, IMAP)
+   ↓
+migrate   → Extract Shadowserver Attachments
    ↓
 refresh → Refresh Stored ASN/WHOIS data
    ↓
