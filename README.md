@@ -275,6 +275,9 @@ Examples:
 # Ingest emails only
 python3 shadow_server_data_analysis_system_builder_and_updater.py email
 
+# Reset Email Selection
+python3 shadow_server_data_analysis_system_builder_and_updater.py email --reset-email-method
+
 # Run email, processing, and country mapping with auto tracking
 python3 shadow_server_data_analysis_system_builder_and_updater.py all --tracker=auto
 
