@@ -24,6 +24,7 @@ from datetime import datetime
 from functools import wraps
 from email import message_from_bytes
 from email.header import decode_header
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote_plus
 
 # === Third-party libraries ===
@@ -45,6 +46,7 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from email import message_from_bytes
 from email.header import decode_header
+from email.policy import default as default_policy
 # === Email parsing ===
 import email
 from email.header import decode_header
@@ -61,7 +63,28 @@ eml_export_dir = "exported_eml"
 logging_dir = "logging"
 tracker_dir = "file_tracking_system"
 graph_tracker_path = os.path.join(tracker_dir, "graph_uid_tracker.json")
-# Folder creation logic (Claire will handle the imports)
+
+# Folder creation logic
+
+def load_last_received_timestamp(graph_last_received_path):
+    if os.path.exists(graph_last_received_path):
+        try:
+            with open(graph_last_received_path, "r") as f:
+                return json.load(f).get("last_received")
+        except Exception as e:
+            print(f"⚠️ Error reading timestamp tracker: {e}")
+    return None  
+        
+def save_last_received_timestamp(graph_last_received_path, latest_time):
+    try:
+        with open(graph_last_received_path, "w") as f:
+            json.dump({"last_received": latest_time}, f)
+        print(f"🕒 Updated last received timestamp: {latest_time}")
+    except Exception as e:
+        print(f"⚠️ Error saving timestamp tracker: {e}")
+graph_last_received_path = os.path.join(tracker_dir, "graph_last_received.json")
+last_received_time = load_last_received_timestamp(graph_last_received_path)        
+
 for folder in [attachments_dir, metadata_dir, eml_export_dir, logging_dir, tracker_dir]:
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -743,6 +766,10 @@ async def attachment_sorting_shadowserver_report_migration():
                     print(f"\r[Advisories] Skipped (already exists): {file}", end="\r", flush=True)
 
 
+import re
+from email import message_from_bytes
+from email.policy import default as default_policy
+
 async def ingest_microsoft_graph():
     print("🔐 Authenticating with Microsoft Graph API...")
     authority = f"https://login.microsoftonline.com/{graph_tenant_id}"
@@ -764,23 +791,31 @@ async def ingest_microsoft_graph():
 
     print("✅ Successfully authenticated to Microsoft Graph.")
 
-    # === Load UID tracker ===
+    # === Load trackers ===
     os.makedirs(tracker_dir, exist_ok=True)
+
     if os.path.exists(graph_tracker_path):
         with open(graph_tracker_path, "r") as f:
             seen_uids = set(json.load(f))
     else:
         seen_uids = set()
 
-    # === Fetch Emails ===
+    graph_last_received_path = os.path.join(tracker_dir, "graph_last_received.json")
+    last_received_time = load_last_received_timestamp(graph_last_received_path)
+
+    # === Build Graph API endpoint ===
+    filter_clause = f"&$filter=receivedDateTime gt {last_received_time}" if last_received_time else ""
+    graph_endpoint = (
+        f"https://graph.microsoft.com/v1.0/users/{graph_user_email}/mailFolders/inbox/messages"
+        f"?$top=200&$orderby=receivedDateTime desc{filter_clause}"
+    )
+
     headers = {
         "Authorization": f"Bearer {result['access_token']}",
         "Content-Type": "application/json"
     }
 
-    graph_endpoint = f"https://graph.microsoft.com/v1.0/users/{graph_user_email}/mailFolders/inbox/messages?$top=200&$orderby=receivedDateTime desc"
     response = requests.get(graph_endpoint, headers=headers)
-
     if response.status_code != 200:
         print(f"❌ Error fetching emails: {response.status_code} - {response.text}")
         return
@@ -789,11 +824,12 @@ async def ingest_microsoft_graph():
     print(f"📬 Retrieved {len(emails)} email(s) from inbox.")
 
     new_uids = set()
+    latest_time = last_received_time
 
     for email_entry in emails:
-        message_id = email_entry.get("id")
+        message_id = str(email_entry.get("id")).strip()
         if message_id in seen_uids:
-            continue  # Skip already processed
+            continue
 
         subject = email_entry.get("subject")
         sender = email_entry.get("from", {}).get("emailAddress", {}).get("address")
@@ -801,7 +837,6 @@ async def ingest_microsoft_graph():
 
         print(f"\n📧 Email: '{subject}' from {sender} at {received_time}")
 
-        # === Fetch MIME Content ===
         mime_url = f"https://graph.microsoft.com/v1.0/users/{graph_user_email}/messages/{message_id}/$value"
         raw_response = requests.get(mime_url, headers=headers)
 
@@ -814,7 +849,48 @@ async def ingest_microsoft_graph():
         with open(eml_path, "wb") as f:
             f.write(raw_email)
 
-        # === Log EML export ===
+        # === MIME Parsing for Attachments or Shadowserver Links ===
+        msg = message_from_bytes(raw_email, policy=default_policy)
+        attachment_found = False
+        attachment_names = []
+
+        for part in msg.walk():
+            content_disposition = part.get("Content-Disposition", "")
+            if "attachment" in content_disposition.lower():
+                filename = part.get_filename()
+                if filename:
+                    attachment_found = True
+                    attachment_names.append(filename)
+                    attachment_path = os.path.join(attachment_dir, filename)
+                    with open(attachment_path, "wb") as f:
+                        f.write(part.get_payload(decode=True))
+                    print(f"📎 Attachment found and saved: {filename}")
+
+        if not attachment_found:
+            print("📭 No attachments found. Scanning body for Shadowserver links...")
+            body_text = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body_text += part.get_content()
+            else:
+                body_text = msg.get_content()
+
+            shadow_links = re.findall(r'https://dl\.shadowserver\.org/\S+', body_text)
+            if shadow_links:
+                print(f"🔗 Found {len(shadow_links)} Shadowserver link(s):")
+                for link in shadow_links:
+                    print(f"   • {link}")
+                write_log_csv(
+                    os.path.join(logging_dir, "shadow_links"),
+                    f"shadow_links_log_{log_time_str[:10]}.csv",
+                    ["timestamp", "uid", "url"],
+                    [[log_time_str, message_id, link] for link in shadow_links]
+                )
+            else:
+                print("❌ No Shadowserver links found in body.")
+
+        # === Final Log and State Tracking ===
         write_log_csv(
             os.path.join(logging_dir, "eml_exports"),
             f"eml_export_log_{log_time_str[:10]}.csv",
@@ -822,16 +898,27 @@ async def ingest_microsoft_graph():
             [log_time_str, message_id, f"{message_id}.eml", eml_path]
         )
 
-        new_uids.add(message_id)
+        if attachment_found:
+            print(f"✅ Attachments processed: {', '.join(attachment_names)}")
+        else:
+            print("ℹ️ No attachments. Shadowserver link scan completed.")
 
-    # === Save updated UID tracker ===
+        new_uids.add(message_id)
+        seen_uids.add(message_id)
+        if received_time and (not latest_time or received_time > latest_time):
+            latest_time = received_time
+
     if new_uids:
-        seen_uids.update(new_uids)
         with open(graph_tracker_path, "w") as f:
             json.dump(sorted(list(seen_uids)), f)
         print(f"📝 Saved {len(new_uids)} new UID(s) to tracker.")
     else:
         print("ℹ️ No new emails to ingest.")
+
+    if latest_time:
+        save_last_received_timestamp(graph_last_received_path, latest_time)
+
+
 
 
 
