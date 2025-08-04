@@ -752,19 +752,29 @@ async def attachment_sorting_shadowserver_report_migration():
     shadowserver_dest = os.path.join(shadowserver_base, "received_shadowserver_reports")
     ensure_dir(shadowserver_dest)
 
-    print("\n[Shadowserver] Searching for CSV files with date-prefixed names in unzipped folders...\n")
+    print("\n[Shadowserver] Searching for CSV files with date-prefixed names in unzipped and sorted folders...\n")
     shadowserver_pattern = re.compile(r"^\d{4}-\d{2}-\d{2}-.*\.csv$", re.IGNORECASE)
 
-    for root, dirs, files in os.walk(unzipped_dir):
-        for file in files:
-            if shadowserver_pattern.match(file):
-                src_path = os.path.join(root, file)
-                dest_path = os.path.join(shadowserver_dest, file)
-                if not os.path.exists(dest_path):
-                    shutil.move(src_path, dest_path)
-                    print(f"\r[Shadowserver] Moved: {file} → {shadowserver_dest}", end="\r", flush=True)
-                else:
-                    print(f"\r[Shadowserver] Skipped (already exists): {file}", end="\r", flush=True)
+    shadowserver_sources = [
+        unzipped_dir,
+        os.path.join("sorted_attachments", "csv_sorted")
+    ]
+
+    for source in shadowserver_sources:
+        if not os.path.exists(source):
+            continue
+
+        for root, dirs, files in os.walk(source):
+            for file in files:
+                if shadowserver_pattern.match(file):
+                    src_path = os.path.join(root, file)
+                    dest_path = os.path.join(shadowserver_dest, file)
+                    if not os.path.exists(dest_path):
+                        shutil.move(src_path, dest_path)
+                        print(f"\r[Shadowserver] Moved: {file} → {shadowserver_dest}", end="\r", flush=True)
+                    else:
+                        print(f"\r[Shadowserver] Skipped (already exists): {file}", end="\r", flush=True)
+
 
     # ==== DISSEMINATED ADVISORY CSV RELOCATION ====
     advisories_base = "dissemenated_advisories_system"
