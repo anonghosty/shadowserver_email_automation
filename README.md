@@ -210,7 +210,7 @@ This script will:
 - Install Python3 and pip
 - Run `bootstrap_shadowserver_environment.py` to install:
   - Required pip packages
-  - Google Chrome
+  - Google Chrome (Automatically updates Google Chrome and it retrieves updated versions's Chromedriver)
   - Matching ChromeDriver
   - System dependencies
 
