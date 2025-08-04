@@ -47,7 +47,12 @@ On the First of August 2025, I received a message from the National CIRT of Keny
 After the KeCIRT troubleshooting meeting another implementation is to be done where emails without attachments will be pull via link in the message body for the Microsoft Graph option just as the IMAP option does.
 
 ---
+## Update - 4th August 2025
 
+Changes are currently being implemented and limits in Microsoft Graph downloads have also been identified. kindly stay tuned.
+
+
+---
 ## Tutorial – Setting up O365 Application for Microsoft Graph
 
 For organizations needing to configure an O365 application to interact with Microsoft Graph securely and correctly, CSIRT Kenya also provided a setup guide. You can find the tutorial below:
