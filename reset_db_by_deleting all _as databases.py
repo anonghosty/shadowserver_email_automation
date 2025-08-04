@@ -12,8 +12,8 @@ password = os.getenv("mongo_password")
 auth_source = os.getenv("mongo_auth_source", "admin")
 host = os.getenv("mongo_host", "127.0.0.1")
 port = int(os.getenv("mongo_port", 27017))
-mongo_encoded_user = quote_plus(mongo_username)
-mongo_encoded_pass = quote_plus(mongo_password)
+mongo_encoded_user = quote_plus(username)
+mongo_encoded_pass = quote_plus(password)
 # MongoDB URI
 uri = f"mongodb://{mongo_encoded_user}:{mongo_encoded_pas}@{host}:{port}/?authSource={auth_source}"
 
