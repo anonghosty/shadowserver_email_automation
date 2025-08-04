@@ -109,26 +109,6 @@ def save_graph_uids(uids):
         json.dump(sorted(list(uids)), f)
 
         
-# === Email Fetch ===
-async def fetch_messages(session, token, user_email):
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"{GRAPH_API_BASE}/users/{user_email}/mailFolders/inbox/messages?$top=100"
-    async with session.get(url, headers=headers) as resp:
-        if resp.status != 200:
-            raise Exception(f"Message list fetch failed: {resp.status}")
-        return (await resp.json()).get("value", [])
-
-async def fetch_raw_message(session, token, message_id):
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/octet-stream"
-    }
-    url = f"{GRAPH_API_BASE}/me/messages/{message_id}/$value"
-    async with session.get(url, headers=headers) as resp:
-        if resp.status != 200:
-            raise Exception(f"Raw message fetch failed: {resp.status}")
-        return await resp.read()
-
 
 # === MongoDB Config ===
 mongo_username = os.getenv("mongo_username")
