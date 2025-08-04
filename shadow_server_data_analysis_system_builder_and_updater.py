@@ -902,7 +902,7 @@ async def ingest_microsoft_graph():
                 if filename:
                     attachment_found = True
                     attachment_names.append(filename)
-                    attachment_path = os.path.join(attachment_dir, filename)
+                    attachment_path = os.path.join(attachments_dir, filename)
                     with open(attachment_path, "wb") as f:
                         f.write(part.get_payload(decode=True))
                     print(f"📎 Attachment found and saved: {filename}")
