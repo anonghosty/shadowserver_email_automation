@@ -48,7 +48,7 @@ After the KeCIRT troubleshooting meeting another implementation is to be done wh
 ---
 ## Update - 4th August 2025
 
-Changes are currently being implemented and limits(intending to allow the user to set required pull frequency) in Microsoft Graph downloads have also been identified. kindly stay tuned.
+Changes are currently being implemented and limits in Microsoft Graph downloads have also been identified. kindly stay tuned.
 - Limit Issue Resolved
 - No attachment issue resolved both IMAP and Microsoft Graph
 - Tracker clear implementation yet to be done
