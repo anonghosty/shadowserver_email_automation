@@ -1703,7 +1703,7 @@ async def sort_shadowserver_by_service(use_tracker=False, service_tracker_mode="
                 fallback_match = re.match(fallback_regex, filename)
                 if fallback_match:
                     print(f"[Service Sorter] Fallback pattern matched: {filename}")
-                    reporting_code_match = re.search(r"-(\d{3,6})-", filename)
+                    reporting_code_match = re.search(r"-\d{3,6}", filename)
                     if reporting_code_match:
                         reporting_code = reporting_code_match.group(0)
                         print(f"[Service Sorter] Reporting code detected: {reporting_code}")
