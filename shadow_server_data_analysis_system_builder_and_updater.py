@@ -25,6 +25,7 @@ from functools import wraps
 from email import message_from_bytes
 from email.header import decode_header
 from email.utils import parsedate_to_datetime
+from email.policy import default as default_policy
 from urllib.parse import quote_plus
 
 # === Third-party libraries ===
@@ -44,9 +45,6 @@ from colorama import Fore, Style
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from dotenv import load_dotenv
-from email import message_from_bytes
-from email.header import decode_header
-from email.policy import default as default_policy
 # === Email parsing ===
 import email
 from email.header import decode_header
@@ -806,10 +804,6 @@ async def attachment_sorting_shadowserver_report_migration():
                 else:
                     print(f"\r[Advisories] Skipped (already exists): {file}", end="\r", flush=True)
 
-
-import re
-from email import message_from_bytes
-from email.policy import default as default_policy
 
 async def ingest_microsoft_graph():
     print("🔐 Authenticating with Microsoft Graph API...")
