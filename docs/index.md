@@ -48,7 +48,7 @@ This section acknowledges the institutional input and guidance received during t
 
 - 3 flavored variations for report generation daily - CSV {can be used in automation}, PDF {can be be used in official reporting}, HTML {has charts and search bars}
 
-![html_report](report_html_sample.png)
+![html_report](new_report_html_sample.png)
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
 
 - MongoDB-based enrichment and storage
