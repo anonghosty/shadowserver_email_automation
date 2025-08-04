@@ -602,7 +602,7 @@ async def main_email_ingestion():
                     if shadowserver_links:
                         print(f"🔗 Found {len(shadowserver_links)} Shadowserver link(s). Downloading...")
 
-                        download_dir = os.path.join(attachments_dir, "from_links")
+                        download_dir = attachments_dir
                         ensure_dir(download_dir)
 
                         for link in shadowserver_links:
@@ -916,14 +916,45 @@ async def ingest_microsoft_graph():
                 print(f"🔗 Found {len(shadow_links)} Shadowserver link(s):")
                 for link in shadow_links:
                     print(f"   • {link}")
+
+                # ✅ Log discovered links
                 write_log_csv(
                     os.path.join(logging_dir, "shadow_links"),
                     f"shadow_links_log_{log_time_str[:10]}.csv",
                     ["timestamp", "uid", "url"],
                     [[log_time_str, message_id, link] for link in shadow_links]
                 )
+
+                # ✅ Download files directly into attachments_dir
+                for link in shadow_links:
+                    try:
+                        r = requests.get(link, timeout=30)
+                        if r.status_code == 200:
+                            content_disposition = r.headers.get("Content-Disposition", "")
+                            filename_match = re.findall(r'filename="?([^"]+)"?', content_disposition)
+                            filename = filename_match[0] if filename_match else os.path.basename(urlparse(link).path)
+                            if not filename:
+                                filename = f"download_{message_id}_{hash(link)}.bin"
+
+                            file_path = os.path.join(attachments_dir, filename)
+                            with open(file_path, "wb") as f:
+                                f.write(r.content)
+
+                            print(f"✅ Downloaded from Shadowserver: {filename}")
+
+                            write_log_csv(
+                                os.path.join(logging_dir, "downloads_from_links"),
+                                f"downloaded_links_log_{log_time_str[:10]}.csv",
+                                ["timestamp", "uid", "url", "filename", "destination"],
+                                [log_time_str, message_id, link, filename, file_path]
+                            )
+                        else:
+                            print(f"⚠️ Failed to download {link} (HTTP {r.status_code})")
+                    except Exception as e:
+                        print(f"❌ Error downloading {link}: {e}")
             else:
                 print("❌ No Shadowserver links found in body.")
+
 
         # === Final Log and State Tracking ===
         write_log_csv(
