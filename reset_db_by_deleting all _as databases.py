@@ -15,7 +15,7 @@ port = int(os.getenv("mongo_port", 27017))
 mongo_encoded_user = quote_plus(username)
 mongo_encoded_pass = quote_plus(password)
 # MongoDB URI
-uri = f"mongodb://{mongo_encoded_user}:{mongo_encoded_pas}@{host}:{port}/?authSource={auth_source}"
+uri = f"mongodb://{mongo_encoded_user}:{mongo_encoded_pass}@{host}:{port}/?authSource={auth_source}"
 
 # Setup log folder
 log_folder = os.path.join("logging", "db_deletion_logs")
