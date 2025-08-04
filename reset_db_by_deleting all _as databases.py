@@ -3,7 +3,7 @@ import csv
 from datetime import datetime
 from pymongo import MongoClient
 from dotenv import load_dotenv
-
+from urllib.parse import quote_plus
 # Load credentials from .env
 load_dotenv()
 
@@ -12,9 +12,10 @@ password = os.getenv("mongo_password")
 auth_source = os.getenv("mongo_auth_source", "admin")
 host = os.getenv("mongo_host", "127.0.0.1")
 port = int(os.getenv("mongo_port", 27017))
-
+mongo_encoded_user = quote_plus(mongo_username)
+mongo_encoded_pass = quote_plus(mongo_password)
 # MongoDB URI
-uri = f"mongodb://{username}:{password}@{host}:{port}/?authSource={auth_source}"
+uri = f"mongodb://{mongo_encoded_user}:{mongo_encoded_pas}@{host}:{port}/?authSource={auth_source}"
 
 # Setup log folder
 log_folder = os.path.join("logging", "db_deletion_logs")
