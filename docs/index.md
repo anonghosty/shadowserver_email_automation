@@ -28,7 +28,7 @@ This section acknowledges the institutional input and guidance received during t
 ---
 ## 🚀 Key Features
 
-- Email attachment ingestion (IMAP Basic Authentication)
+- Email attachment ingestion (IMAP Authentication,Microsoft Graph Authentication, Google Workspace Oauth Authentication[Coming Soon])
 
 ![IMAP](imap.png)
 
