@@ -1,4 +1,4 @@
-# Shadowserver Report Ingestion & Intelligence Toolkit -Troubleshooting Phase Kindly Hang Tight Resolving Some Bugs Related To No Attachement Downloads 
+# Shadowserver Report Ingestion & Intelligence Toolkit -Troubleshooting Phase Kindly Hang Tight Resolving Some Bugs Related To No Attachment in Email Downloads. Nearly There  
 
 **Author:** Ike Owuraku Amponsah\
 **Contributors:** KeCIRT\
