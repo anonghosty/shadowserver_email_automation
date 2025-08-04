@@ -596,6 +596,47 @@ async def main_email_ingestion():
                 if not links:
                     links = re.findall(r'(https?://[^\s\'"<>]+)', body)
 
+                # === Shadowserver file download if no attachments ===
+                if attachment_count == 0:
+                    print("📭 No attachments found. Scanning for Shadowserver links...")
+                    shadowserver_links = [link for link in links if link.startswith("https://dl.shadowserver.org/")]
+
+                    if shadowserver_links:
+                        print(f"🔗 Found {len(shadowserver_links)} Shadowserver link(s). Downloading...")
+
+                        download_dir = os.path.join(attachments_dir, "from_links")
+                        ensure_dir(download_dir)
+
+                        for link in shadowserver_links:
+                            try:
+                                async with session.get(link) as resp:
+                                    if resp.status == 200:
+                                        content_disposition = resp.headers.get("Content-Disposition", "")
+                                        filename_match = re.findall(r'filename="?([^"]+)"?', content_disposition)
+                                        filename = filename_match[0] if filename_match else os.path.basename(urlparse(link).path)
+                                        if not filename:
+                                            filename = f"download_{uid}_{hash(link)}.bin"
+
+                                        file_path = os.path.join(download_dir, filename)
+                                        with open(file_path, "wb") as f:
+                                            f.write(await resp.read())
+
+                                        print(f"✅ Downloaded from Shadowserver: {filename}")
+
+                                        write_log_csv(
+                                            os.path.join(logging_dir, "downloads_from_links"),
+                                            f"downloaded_links_log_{timestamp_now}.csv",
+                                            ["timestamp", "uid", "url", "filename", "destination"],
+                                            [log_time_str, uid, link, filename, file_path]
+                                        )
+                                    else:
+                                        print(f"⚠️ Failed to download {link} (HTTP {resp.status})")
+                            except Exception as e:
+                                print(f"❌ Error downloading {link}: {str(e)}")
+                    else:
+                        print("❌ No Shadowserver links found.")
+
+
                 # === Save metadata to CSV
                 metadata_file = os.path.join(metadata_dir, f"{uid}.csv")
                 with open(metadata_file, "w", newline='', encoding="utf-8") as f:
