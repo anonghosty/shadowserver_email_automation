@@ -607,124 +607,76 @@ tbody tr:nth-child(n+11) { animation-delay: 0.8s; }
 </style>
 </head>
 <script>
-// Search table functionality
 function searchTable(id, query) {
   query = query.toLowerCase();
   const table = document.getElementById(id);
   const tbody = table.querySelector('tbody');
   const rows = tbody.querySelectorAll('tr');
-  
-  // First, remove any existing animations
   rows.forEach(row => {
     row.style.animation = 'none';
   });
-  
-  // Apply filter and toggle filtered-out class
   rows.forEach(row => {
     const text = row.innerText.toLowerCase();
     const matches = text.includes(query);
-    
-    // Add or remove filtered-out class based on whether it matches
     row.classList.toggle('filtered-out', !matches);
-    
-    // Hide non-matching rows completely to prevent them from being counted in pagination
     row.style.display = matches ? '' : 'none';
-    
-    // Clear any existing animations
     row.style.animation = 'none';
-    row.style.opacity = '0'; // Reset opacity for all rows
+    row.style.opacity = '0'; 
   });
-  
-  // Force reflow
   tbody.offsetHeight;
-  
-  // Apply appropriate sorting for this table
   applyTableSort(id);
-  
-  // Reset pagination to first page with new filtered data
   updatePagination(id, 1, true);
 }
-
-// Store sorting functions for different tables
 const tableSortFunctions = {
   "categoryTable": sortCategoryBySeverity,
   "ipTable": sortIpTableByIp,
   "prefixTable": sortPrefixTableByPrefix
 };
-
-// Function to apply the appropriate sort to a table
 function applyTableSort(tableId) {
   if (tableSortFunctions[tableId]) {
     tableSortFunctions[tableId]();
   }
 }
-
-// Sort category table by severity
 function sortCategoryBySeverity() {
   const table = document.getElementById("categoryTable");
   if (!table) return;
-  
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
   const severityOrder = { 'CRITICAL': 1, 'HIGH': 2, 'MEDIUM': 3, 'LOW': 4, 'INFO': 5 };
-  
   rows.sort((a, b) => {
     const severityA = severityOrder[a.cells[0].innerText.trim().toUpperCase()] || 99;
     const severityB = severityOrder[b.cells[0].innerText.trim().toUpperCase()] || 99;
     return severityA - severityB;
   });
-  
-  // Clear and re-append sorted rows
   rows.forEach(row => tbody.appendChild(row));
 }
-
-// Sort IP table by IP addresses
 function sortIpTableByIp() {
   const table = document.getElementById("ipTable");
   if (!table) return;
-  
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
-  
   rows.sort((a, b) => {
-    // Extract IP addresses from first cell
     const ipA = a.cells[0].innerText.trim();
     const ipB = b.cells[0].innerText.trim();
-    
-    // Compare IP addresses numerically
     return compareIpAddresses(ipA, ipB);
   });
-  
-  // Clear and re-append sorted rows
   rows.forEach(row => tbody.appendChild(row));
 }
-
-// Sort prefix table by prefixes
 function sortPrefixTableByPrefix() {
   const table = document.getElementById("prefixTable");
   if (!table) return;
-  
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
-  
   rows.sort((a, b) => {
-    // Extract prefixes from first cell
     const prefixA = a.cells[0].innerText.trim();
     const prefixB = b.cells[0].innerText.trim();
-    
-    // Compare prefixes (CIDR notation)
     return compareCidrPrefixes(prefixA, prefixB);
   });
-  
-  // Clear and re-append sorted rows
   rows.forEach(row => tbody.appendChild(row));
 }
-
-// Helper function to compare IP addresses numerically
 function compareIpAddresses(ipA, ipB) {
   const partsA = ipA.split('.').map(Number);
   const partsB = ipB.split('.').map(Number);
-  
   for (let i = 0; i < 4; i++) {
     if (partsA[i] !== partsB[i]) {
       return partsA[i] - partsB[i];
@@ -732,46 +684,30 @@ function compareIpAddresses(ipA, ipB) {
   }
   return 0;
 }
-
-// Helper function to compare CIDR prefixes (e.g., "192.168.0.0/24")
 function compareCidrPrefixes(prefixA, prefixB) {
-  // Split IP and subnet mask
   const [ipA, maskA] = prefixA.split('/');
   const [ipB, maskB] = prefixB.split('/');
-  
-  // First compare subnet masks (smaller masks first)
   const maskCompare = parseInt(maskA) - parseInt(maskB);
   if (maskCompare !== 0) return maskCompare;
-  
-  // If masks are equal, compare IP addresses
   return compareIpAddresses(ipA, ipB);
 }
-
-// Initialize pagination for a table
 function initPagination(tableId) {
   const table = document.getElementById(tableId);
   if (!table) return;
-  
-  // Add data attribute to track current page and rows per page
   table.dataset.currentPage = '1';
   table.dataset.rowsPerPage = '10';
-  table.dataset.previouslyVisibleRows = ''; // Track which rows were visible
-  
-  // Make all rows visible by default
+  table.dataset.previouslyVisibleRows = ''; 
   const tbody = table.querySelector('tbody');
   const rows = tbody.querySelectorAll('tr');
   rows.forEach(row => {
     row.classList.remove('filtered-out');
     row.style.display = '';
   });
-  
-  // Create pagination container if it doesn't exist
   let paginationContainer = document.getElementById(`${tableId}-pagination`);
   if (!paginationContainer) {
     paginationContainer = document.createElement('div');
     paginationContainer.id = `${tableId}-pagination`;
     paginationContainer.className = 'pagination-container';
-    
     const sizeSelector = document.createElement('div');
     sizeSelector.className = 'pagination-size-selector';
     sizeSelector.innerHTML = `
@@ -785,105 +721,70 @@ function initPagination(tableId) {
       </select>
       <span>entries</span>
     `;
-    
     const info = document.createElement('div');
     info.id = `${tableId}-pagination-info`;
     info.className = 'pagination-info';
-    
     const controls = document.createElement('div');
     controls.id = `${tableId}-pagination-controls`;
     controls.className = 'pagination-controls';
-    
     paginationContainer.appendChild(sizeSelector);
     paginationContainer.appendChild(info);
     paginationContainer.appendChild(controls);
-    
-    // Add pagination container after the table
     table.parentNode.insertBefore(paginationContainer, table.nextSibling);
   }
-  
-  // Initialize with page 1
   updatePagination(tableId, 1);
 }
-
-// Update pagination display and controls
 function updatePagination(tableId, page, isSearch = false) {
   const table = document.getElementById(tableId);
   if (!table) return;
-  
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
-  
-  // Update current page
   const rowsPerPage = parseInt(table.dataset.rowsPerPage) || 10;
   table.dataset.currentPage = page.toString();
-  
-  // Calculate pagination info
   const totalRows = rows.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
   const startIndex = (page - 1) * rowsPerPage;
   const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
-  
-  // Get currently visible rows for comparison
   const previouslyVisibleRows = table.dataset.previouslyVisibleRows 
     ? table.dataset.previouslyVisibleRows.split(',').map(Number) 
     : [];
-  
-  // Build new list of visible row indices
   const newlyVisibleRows = [];
   for (let i = startIndex; i < endIndex; i++) {
     newlyVisibleRows.push(i);
   }
-  
-  // Hide all rows that aren't filtered out
   rows.forEach((row, idx) => {
     row.style.display = 'none';
   });
-  
-  // Show only rows for current page with appropriate animations
   for (let i = startIndex; i < endIndex; i++) {
     if (rows[i]) {
       const row = rows[i];
       row.style.display = '';
-      
       if (isSearch) {
-        // For search results, always animate in
         row.style.animation = `fadeInUp 0.3s ease-out ${(i - startIndex) * 0.05}s forwards`;
       } else {
-        // For regular pagination, only animate rows that weren't visible before
         const wasVisible = previouslyVisibleRows.includes(i);
         if (!wasVisible) {
-          row.style.opacity = '0'; // Start transparent
+          row.style.opacity = '0'; 
           row.style.animation = `fadeInUp 0.3s ease-out ${(i - startIndex) * 0.05}s forwards`;
         } else {
-          row.style.opacity = '1'; // Already visible
+          row.style.opacity = '1'; 
           row.style.animation = 'none';
         }
       }
     }
   }
-  
-  // Store currently visible rows for next comparison
   table.dataset.previouslyVisibleRows = newlyVisibleRows.join(',');
-  
-  // Update pagination info text
   const infoElement = document.getElementById(`${tableId}-pagination-info`);
   if (infoElement) {
     const start = totalRows > 0 ? startIndex + 1 : 0;
     infoElement.textContent = `Showing ${start} to ${endIndex} of ${totalRows} entries`;
   }
-  
-  // Update pagination controls
   const controlsElement = document.getElementById(`${tableId}-pagination-controls`);
   if (controlsElement) {
-    // Clear existing controls
     controlsElement.innerHTML = '';
-    
     if (totalPages <= 1) {
-      return; // No pagination needed
+      return; 
     }
-    
-    // Previous button
     const prevButton = document.createElement('button');
     prevButton.className = `pagination-button ${page <= 1 ? 'disabled' : ''}`;
     prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
@@ -892,26 +793,18 @@ function updatePagination(tableId, page, isSearch = false) {
       if (page > 1) updatePagination(tableId, page - 1);
     });
     controlsElement.appendChild(prevButton);
-    
-    // Page buttons
-    const maxButtons = 5; // Maximum number of page buttons to show
+    const maxButtons = 5; 
     let startBtn = Math.max(1, page - Math.floor(maxButtons / 2));
     let endBtn = Math.min(totalPages, startBtn + maxButtons - 1);
-    
-    // Adjust if we're near the end
     if (endBtn - startBtn < maxButtons - 1) {
       startBtn = Math.max(1, endBtn - maxButtons + 1);
     }
-    
-    // First page button
     if (startBtn > 1) {
       const firstBtn = document.createElement('button');
       firstBtn.textContent = '1';
       firstBtn.className = 'pagination-button';
       firstBtn.addEventListener('click', () => updatePagination(tableId, 1));
       controlsElement.appendChild(firstBtn);
-      
-      // Ellipsis
       if (startBtn > 2) {
         const ellipsis = document.createElement('span');
         ellipsis.textContent = '...';
@@ -919,8 +812,6 @@ function updatePagination(tableId, page, isSearch = false) {
         controlsElement.appendChild(ellipsis);
       }
     }
-    
-    // Page number buttons
     for (let i = startBtn; i <= endBtn; i++) {
       const pageBtn = document.createElement('button');
       pageBtn.textContent = i.toString();
@@ -928,25 +819,19 @@ function updatePagination(tableId, page, isSearch = false) {
       pageBtn.addEventListener('click', () => updatePagination(tableId, i));
       controlsElement.appendChild(pageBtn);
     }
-    
-    // Last page button
     if (endBtn < totalPages) {
-      // Ellipsis
       if (endBtn < totalPages - 1) {
         const ellipsis = document.createElement('span');
         ellipsis.textContent = '...';
         ellipsis.className = 'pagination-button disabled';
         controlsElement.appendChild(ellipsis);
       }
-      
       const lastBtn = document.createElement('button');
       lastBtn.textContent = totalPages.toString();
       lastBtn.className = 'pagination-button';
       lastBtn.addEventListener('click', () => updatePagination(tableId, totalPages));
       controlsElement.appendChild(lastBtn);
     }
-    
-    // Next button
     const nextButton = document.createElement('button');
     nextButton.className = `pagination-button ${page >= totalPages ? 'disabled' : ''}`;
     nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
@@ -957,41 +842,24 @@ function updatePagination(tableId, page, isSearch = false) {
     controlsElement.appendChild(nextButton);
   }
 }
-
-// Change page size
 function changePageSize(tableId, size) {
   const table = document.getElementById(tableId);
   if (!table) return;
-  
-  // Clear previously visible rows tracking when changing page size
   table.dataset.previouslyVisibleRows = '';
-  
-  // Update stored rows per page
   table.dataset.rowsPerPage = size;
-  
-  // Reset to first page with new size
   updatePagination(tableId, 1, true);
 }
-
-// Initialize pagination when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  // Add animation classes to sections
   const sections = document.querySelectorAll('.section');
   sections.forEach((section, index) => {
     section.style.setProperty('--delay', index + 1);
   });
-
-  // Apply initial sorting to all tables
   sortCategoryBySeverity();
   sortIpTableByIp();
   sortPrefixTableByPrefix();
-
-  // Initialize pagination for all tables
   initPagination('ipTable');
   initPagination('prefixTable');
   initPagination('categoryTable');
-  
-    // Define severity color mapping
   const severityColors = {
     'CRITICAL': '#ff4c4c',
     'HIGH': '#ff944c',
@@ -999,36 +867,26 @@ document.addEventListener("DOMContentLoaded", () => {
     'LOW': '#17c0eb',
     'INFO': '#999999'
   };
-
-  // Extract data from the category table
   const severityCounts = {};
   const categoryCounts = {};
   const categorySeverity = {};
-
   document.querySelectorAll('#categoryTable tbody tr').forEach(row => {
     const severity = row.cells[0].innerText.trim().toUpperCase();
     const category = row.cells[3].innerText.trim();
     const count = parseInt(row.cells[4].innerText.trim()) || 1;
-
     severityCounts[severity] = (severityCounts[severity] || 0) + count;
     categoryCounts[category] = (categoryCounts[category] || 0) + count;
-    categorySeverity[category] = severity; // Store severity for this category
+    categorySeverity[category] = severity; 
   });
-
-  // Function to create and animate charts
   const makeChart = (ctxId, dataObj, labelText, colorCallback) => {
     const ctx = document.getElementById(ctxId);
     if (!ctx) return;
-    
-    // Add animation to chart
     ctx.style.opacity = 0;
     ctx.style.transform = 'scale(0.9)';
-    
     setTimeout(() => {
       ctx.style.transition = 'all 0.6s ease-out';
       ctx.style.opacity = 1;
       ctx.style.transform = 'scale(1)';
-      
       new Chart(ctx, {
         type: 'pie',
         data: {
@@ -1110,13 +968,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }, 500);
   };
-
-  // Generate the charts
-  // Severity chart - color by severity
   makeChart('severityChart', severityCounts, 'Events by Severity', 
     severity => severityColors[severity.toUpperCase()] || '#555');
-
-  // Category chart - color by severity of category
   makeChart('categoryChart', categoryCounts, 'Events by Category', 
     category => severityColors[categorySeverity[category]] || '#666');
 });
