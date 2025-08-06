@@ -56,7 +56,14 @@ This section acknowledges the institutional input and guidance received during t
 
 - Metadata scraping using Selenium + Chrome
 ![metadata](metadata_sample.png)
+
+- Portable Dashboard Showcasing Trends and Bar Charts For Organisation,Date and Category Comparisons
+
+![Portable Dashbboard Trends and Configuration Flavors](portable_dashboard_visualisation.png)
+![Analytics Overview](analytics_overview.png)
+
 ---
+
 
 
 
