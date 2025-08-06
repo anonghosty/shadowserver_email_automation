@@ -53,6 +53,7 @@ if not requirements_path.exists():
         "selenium",
         "tqdm",
         "msal",
+        "dash",
         "python-dotenv",
     ]
 #    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
@@ -150,4 +151,5 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
+
 
