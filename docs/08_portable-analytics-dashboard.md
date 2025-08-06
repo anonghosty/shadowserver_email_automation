@@ -24,7 +24,7 @@ This dashboard is fully portable and runs locally in a browser.
 Before launching the dashboard, ensure the following steps are complete:
 
 1. **Shadowserver Reports Generated**
-   The script `generate_statistics_reported_from_shadowserver_unverified.py` **must be run for today’s date** (or the desired date range).
+   The script `generate_statistics_reported_from_shadowserver_unverified.py` **must be run daily**.
 
    This generates CSV files in the format:
 
