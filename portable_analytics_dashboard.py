@@ -7,10 +7,6 @@ import pandas as pd
 import os
 import glob
 import re
-from dotenv import load_dotenv
-
-# === Load environment variables ===
-load_dotenv()
 
 # Initialize the Dash app with external stylesheets
 app = dash.Dash(__name__, external_stylesheets=[
@@ -106,7 +102,7 @@ app.index_string = '''
             
             /* Layout components */
             .container {
-
+                max-width: 1400px;
                 margin: 0 auto;
                 padding: 0 1.5rem;
             }
@@ -447,14 +443,14 @@ app.index_string = '''
     </body>
 </html>
 '''
-cert_name = os.getenv("cert_name", "default-cert")
+
 # Professional layout
 app.layout = html.Div([
     # Header
     html.Div([
         html.Div([
-            html.H1(cert_name, className="header-title"),
-            html.P("Aggregated Threat Intelligence and Security Analytics", className="header-subtitle")
+            html.H1("Shadowserver Foundation", className="header-title"),
+            html.P("Threat Intelligence & Security Analytics Dashboard", className="header-subtitle")
         ], className="header-content")
     ], className="header"),
     
@@ -510,28 +506,15 @@ app.layout = html.Div([
             color="#3182ce",
             children=[
                 # Data table section
-                html.Div([
-                    html.Div([
-                        html.H2("Data Summary", className="heading-3")
-                    ], className="card-header"),
-                    html.Div(
-                        id='data-table',
-                        className="card-body"
-                    )
-                ], className="card", style={"margin-bottom": "2rem"}),
+                html.Div(
+                    id='data-table',
+                    className="card-body"
+                ),
                 
-                # Charts section
-                html.Div([
-                    html.Div([
-                        html.H2("Analytics Overview", className="heading-3")
-                    ], className="card-header"),
-                    html.Div([
-                        html.Div(
-                            id='charts-container',
-                            className="grid grid-cols-1 md:grid-cols-2"
-                        )
-                    ], className="card-body")
-                ], className="card")
+                # Charts section  
+                html.Div(
+                    id='charts-container'
+                )
             ]
         )
     ], className="container"),
@@ -539,25 +522,14 @@ app.layout = html.Div([
     # Footer
     html.Div([
         html.Div([
-            html.P(
-                [
-                    f"© 2025 {cert_name}. ",
-                    html.Span("Documentation: "),
-                    html.A(
-                        "https://anonghosty.github.io/shadowserver_email_automation/",
-                        href="https://anonghosty.github.io/shadowserver_email_automation/",
-                        target="_blank",
-                        style={"color": "inherit", "text-decoration": "underline"}
-                    )
-                ],
-                style={
-                    "text-align": "center",
-                    "color": "var(--gray-500)",
-                    "font-size": "0.875rem",
-                    "padding": "2rem 0"
-                }
-            )
-
+            html.P([
+                "© 2024 Shadowserver Foundation. Professional threat intelligence platform."
+            ], style={
+                "text-align": "center",
+                "color": "var(--gray-500)",
+                "font-size": "0.875rem",
+                "padding": "2rem 0"
+            })
         ], className="container")
     ], style={
         "border-top": "1px solid var(--gray-200)",
@@ -694,14 +666,14 @@ def update_dashboard(org_names, selected_dates, selected_categories):
                 style_data_conditional=[
                     {
                         'if': {'column_id': col, 'filter_query': f'{{{col}}} > 0'},
-                        'backgroundColor': 'rgba(229, 62, 62, 0.1)',
-                        'color': '#c53030'
+                        'backgroundColor': 'rgba(56, 161, 105, 0.1)',
+                        'color': '#2d7738'
                     } for col in pivot_df.columns if 'Change' in col
                 ] + [
                     {
                         'if': {'column_id': col, 'filter_query': f'{{{col}}} < 0'},
-                        'backgroundColor': 'rgba(56, 161, 105, 0.1)',
-                        'color': '#2d7738'
+                        'backgroundColor': 'rgba(229, 62, 62, 0.1)',
+                        'color': '#c53030'
                     } for col in pivot_df.columns if 'Change' in col
                 ],
                 page_size=15,
