@@ -60,6 +60,9 @@ This section acknowledges the institutional input and guidance received during t
 - Portable Dashboard Showcasing Trends and Bar Charts For Organisation,Date and Category Comparisons
 
 ![Portable Dashbboard Trends and Configuration Flavors](portable_dashboard_visualisation_new.png)
+
+*Update*: The trend color logic for the Change field has been corrected. A decrease in value (negative change) is now appropriately displayed in green, while an increase in value (positive change) is shown in red, aligning with standard risk and anomaly indicators.
+
 ![Analytics Overview](analytics_overview.png)
 
 ---
