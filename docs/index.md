@@ -59,7 +59,7 @@ This section acknowledges the institutional input and guidance received during t
 
 - Portable Dashboard Showcasing Trends and Bar Charts For Organisation,Date and Category Comparisons
 
-![Portable Dashbboard Trends and Configuration Flavors](portable_dashboard_visualisation.png)
+![Portable Dashbboard Trends and Configuration Flavors](portable_dashboard_visualisation_new.png)
 ![Analytics Overview](analytics_overview.png)
 
 ---
