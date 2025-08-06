@@ -727,7 +727,7 @@ def update_dashboard(org_names, selected_dates, selected_categories):
                 y='Count', 
                 color='Date',
                 barmode='group',
-                title=f'{org_name} - Threat Analysis',
+                title=f'{org_name} - Reported Threat Intelligence Analysis',
                 color_discrete_sequence=['#3182ce', '#38a169', '#d69e2e', '#e53e3e', '#805ad5']
             )
             
