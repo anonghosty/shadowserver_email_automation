@@ -1,3 +1,7 @@
+---
+title: 08 Portable Analytics Dashboard
+---
+
 # Portable Analytics Dashboard
 
 ## Overview
