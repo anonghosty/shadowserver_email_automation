@@ -7,7 +7,10 @@ import pandas as pd
 import os
 import glob
 import re
+from dotenv import load_dotenv
 
+# === Load environment variables ===
+load_dotenv()
 # Initialize the Dash app with external stylesheets
 app = dash.Dash(__name__, external_stylesheets=[
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
@@ -445,12 +448,14 @@ app.index_string = '''
 '''
 
 # Professional layout
+cert_name = os.getenv("cert_name", "default-cert")
+# Professional layout
 app.layout = html.Div([
     # Header
     html.Div([
         html.Div([
-            html.H1("Shadowserver Foundation", className="header-title"),
-            html.P("Threat Intelligence & Security Analytics Dashboard", className="header-subtitle")
+            html.H1(cert_name, className="header-title"),
+            html.P("Aggregated Threat Intelligence and Security Analytics", className="header-subtitle")
         ], className="header-content")
     ], className="header"),
     
@@ -522,14 +527,25 @@ app.layout = html.Div([
     # Footer
     html.Div([
         html.Div([
-            html.P([
-                "© 2024 Shadowserver Foundation. Professional threat intelligence platform."
-            ], style={
-                "text-align": "center",
-                "color": "var(--gray-500)",
-                "font-size": "0.875rem",
-                "padding": "2rem 0"
-            })
+            html.P(
+                [
+                    f"© 2025 {cert_name}. ",
+                    html.Span("Documentation: "),
+                    html.A(
+                        "https://anonghosty.github.io/shadowserver_email_automation/",
+                        href="https://anonghosty.github.io/shadowserver_email_automation/",
+                        target="_blank",
+                        style={"color": "inherit", "text-decoration": "underline"}
+                    )
+                ],
+                style={
+                    "text-align": "center",
+                    "color": "var(--gray-500)",
+                    "font-size": "0.875rem",
+                    "padding": "2rem 0"
+                }
+            )
+
         ], className="container")
     ], style={
         "border-top": "1px solid var(--gray-200)",
