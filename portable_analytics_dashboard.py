@@ -682,14 +682,14 @@ def update_dashboard(org_names, selected_dates, selected_categories):
                 style_data_conditional=[
                     {
                         'if': {'column_id': col, 'filter_query': f'{{{col}}} > 0'},
-                        'backgroundColor': 'rgba(56, 161, 105, 0.1)',
-                        'color': '#2d7738'
+                        'backgroundColor': 'rgba(229, 62, 62, 0.1)',
+                        'color': '#c53030'
                     } for col in pivot_df.columns if 'Change' in col
                 ] + [
                     {
                         'if': {'column_id': col, 'filter_query': f'{{{col}}} < 0'},
-                        'backgroundColor': 'rgba(229, 62, 62, 0.1)',
-                        'color': '#c53030'
+                        'backgroundColor': 'rgba(56, 161, 105, 0.1)',
+                        'color': '#2d7738'
                     } for col in pivot_df.columns if 'Change' in col
                 ],
                 page_size=15,
