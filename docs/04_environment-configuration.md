@@ -7,6 +7,13 @@ The `.env` file is used to configure runtime parameters like MongoDB access, ema
 
 ---
 
+Create a  copy of the .env from the .env_example  with the command below
+
+```bash
+cp .env_example .env
+```
+---
+
 ## 🔐 MongoDB Settings
 
 | Variable           | Purpose                                                                 |
