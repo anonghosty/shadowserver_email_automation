@@ -122,7 +122,20 @@ Stored in MongoDB `reference_system` database per org.
 5. **Page footer with TLP:AMBER, reference, and page number**
 
 ---
+Run command below for statiscal data on all collections  in the knowledgebase related to shadowserver for today
 
+```bash
+
+python3 generate_statistics_reported_from_shadowserver_unverified.py
+
+```
+
+Run  command below for malicious communication activity reported by shadowserver
+
+```bash
+python3 generate_reported_malicious_communication_reports.py
+```
+---
 ## 🧼 Notes
 
 - Category names are cleaned (e.g., remove suffixes like `-318` - this is inline and will be updated).
