@@ -130,6 +130,7 @@ def generate_pdf_report(org_name, db_name, collection_attacks, pdf_path, cert_na
 
         # Attack Summary
         story.append(Paragraph("<b> Reported Malicious Communication Summary:</b>", styles['Normal']))
+        story.append(Paragraph("Note: 'ZZ' indicates that the destination country is unknown.", styles['Normal']))
         for src, dst, count in data['attacks']:
             src_name = get_country_name(src)
             dst_name = get_country_name(dst)
@@ -213,7 +214,7 @@ def main():
     client = MongoClient(mongo_uri)
     db_names = client.list_database_names()
 
-    yesterday = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=1)
+    yesterday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
     today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
     for db_name in db_names:
@@ -245,12 +246,18 @@ def main():
             if collection.count_documents(yday_query, limit=1):
                 yday_collections.append(col_name)
                 attack_counter = defaultdict(lambda: defaultdict(int))
+                raw_count = collection.count_documents(yday_query)
+                valid_attack_count = 0
 
                 for doc in collection.find(yday_query, {"src_geo": 1, "dst_geo": 1}):
-                    src_geo = doc.get("src_geo", "").upper()
-                    dst_geo = doc.get("dst_geo", "").upper()
+                    src_geo = (doc.get("src_geo") or "ZZ").upper()
+                    dst_geo = (doc.get("dst_geo") or "ZZ").upper()
                     if src_geo and dst_geo and src_geo != dst_geo:
+
                         attack_counter[src_geo][dst_geo] += 1
+
+                #print(f"→ Raw DB Count: {raw_count}")
+                #print(f"→ Valid (Filtered) Attack Entries: {valid_attack_count}")
 
                 attacks = [(src, dst, count) for src, dsts in attack_counter.items() for dst, count in dsts.items()]
                 if not attacks:
