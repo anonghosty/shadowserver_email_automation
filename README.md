@@ -61,9 +61,12 @@ Key features include:
 - Archive and attachment extraction (ZIP, RAR, 7z)
 - CSV validation, geo/IP/ASN enrichment
 - Organization mapping and alert tracking
-- 3 flavored variations for report generation daily - CSV {can be used in automation}, PDF {can be be used in official reporting}, HTML {has charts and search bars}
+- 4 flavored variations for report generation daily - CSV {can be used in automation}, 2 PDFs {can be be used in official reporting}, HTML {has charts and search bars}
+- Portable dashboard for quick visualisation in meetings for current threat landscape reports, meetings and decisions on advisory dissemination
 - Full support for MongoDB-backed enrichment
 - Chrome + Selenium automation for scraping report metadata
+
+![](docs/thumbs-up-computer.gif)
 
 ---
 ---
