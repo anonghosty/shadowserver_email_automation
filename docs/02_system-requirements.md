@@ -32,19 +32,25 @@ title: 02 System Requirements
 
 ## Python Package Dependencies
 
-| #   | Package          | Purpose                                                                 |
-|-----|------------------|-------------------------------------------------------------------------|
-| 1   | `aiofiles`       | Async file read/write                                                  |
-| 2   | `aiohttp`        | Async HTTP requests                                                    |
-| 3   | `async-lru`      | Caching for async operations                                           |
-| 4   | `beautifulsoup4` | HTML/XML parsing                                                       |
-| 5   | `bs4`            | Alias for BeautifulSoup                                                |
-| 6   | `colorama`       | Terminal color output                                                  |
-| 7   | `pandas`         | DataFrame-based parsing and processing                                 |
-| 8   | `pymongo`        | MongoDB driver                                                         |
-| 9   | `py7zr`          | 7-Zip archive extraction                                               |
-| 10  | `rarfile`        | `.rar` support                                                         |
-| 11  | `reportlab`      | PDF generation                                                         |
-| 12  | `selenium`       | Headless browser automation                                            |
-| 13  | `tqdm`           | Progress bar                                                           |
-| 14  | `python-dotenv`  | Load configuration from `.env`                                         |
+| #  | Package          | Purpose                                                                                |
+| -- | ---------------- | -------------------------------------------------------------------------------------- |
+| 1  | `aiofiles`       | Asynchronous file operations without blocking the event loop                           |
+| 2  | `aiohttp`        | Asynchronous HTTP requests and web client support                                      |
+| 3  | `async-lru`      | Caching for async functions to improve performance                                     |
+| 4  | `beautifulsoup4` | HTML/XML parsing for web scraping and document analysis                                |
+| 5  | `bs4`            | Import alias for BeautifulSoup (required by some packages)                             |
+| 6  | `colorama`       | Cross-platform colored terminal output                                                 |
+| 7  | `pandas`         | High-level data structures and analysis tools for CSV/JSON                             |
+| 8  | `pymongo`        | MongoDB driver to insert and query intelligence data                                   |
+| 9  | `py7zr`          | 7-Zip archive extraction and creation                                                  |
+| 10 | `rarfile`        | Handle `.rar` files                                                                    |
+| 11 | `reportlab`      | Generate structured PDF reports dynamically                                            |
+| 12 | `selenium`       | Web automation for browser-based scraping or headless downloads                        |
+| 13 | `tqdm`           | Lightweight progress bars in loops and pipelines                                       |
+| 14 | `python-dotenv`  | Load environment variables from `.env` for config and secrets                          |
+| 15 | `msal`           | Microsoft Authentication Library for Azure AD integration and secure token acquisition |
+| 16 | `dash`           | Framework for building interactive web dashboards using Python                         |
+| 17 | `geopandas`      | Extend Pandas for geospatial data handling and mapping                                 |
+| 18 | `pycountry`      | Access ISO country, subdivision, currency, and language lists                          |
+| 19 | `matplotlib`     | Data visualization and chart plotting for analytics and reports                        |
+
