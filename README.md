@@ -2,8 +2,7 @@
 **Author:** Ike Owuraku Amponsah\
 **Contributors:** KeCIRT\
 **LinkedIn:** [https://www.linkedin.com/in/iowuraku](https://www.linkedin.com/in/iowuraku)\
-**License:** [MIT (Modified - No Resale)](./LICENSE)
-
+**Documentation:** [HERE IS THE DOCUMENTATION)](https://anonghosty.github.io/shadowserver_email_automation/)
 ---
 
 ## License
@@ -46,8 +45,7 @@ This section acknowledges the institutional input and guidance received during t
    **Update** On August 3rd, the KeCIRT team conducted a dedicated troubleshooting session to address persistent issues related to the graph option. After a comprehensive review and collaborative debugging, the underlying bugs were successfully identified and resolved. The graph functionality is now fully operational and performing as expected.
 ---
 
-## Documentation 
-https://anonghosty.github.io/shadowserver_email_automation/
+
 
 ## Overview
 
