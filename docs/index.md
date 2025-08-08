@@ -46,9 +46,11 @@ This section acknowledges the institutional input and guidance received during t
 ![Country Sort](country_sort_example.png)
 ![Service Sort](service_sample.png)
 
-- 3 flavored variations for report generation daily - CSV {can be used in automation}, PDF {can be be used in official reporting}, HTML {has charts and search bars}
+- 3 flavored variations for report generation daily - CSV {can be used in automation}, PDFs {can be be used in official reporting also added threatmap reports for visualisation of malicious communication }, HTML {has charts and search bars}
 
 ![Pdf_report](malicious_communication_reporting_new.png)
+
+**Dependency implementation in progress for threatmap reports**
 
 ![html_report](new_report_html_sample.png)
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
