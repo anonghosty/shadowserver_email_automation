@@ -1,7 +1,7 @@
 # Shadowserver Report Ingestion & Intelligence Toolkit 
 
 **Author:** Ike Owuraku Amponsah\
-**Professional Contributors:** KeCIRT\
+**Professional Contributors:** KeCIRT(MICROSOFT GRAPH IMPLEMENTATION WITH DOCUMENTATION)\
 **LinkedIn:** [https://www.linkedin.com/in/iowuraku](https://www.linkedin.com/in/iowuraku)\
 **Documentation:** [HERE IS THE DOCUMENTATION](https://anonghosty.github.io/shadowserver_email_automation/)
 
