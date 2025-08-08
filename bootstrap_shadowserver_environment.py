@@ -39,6 +39,7 @@ if not requirements_path.exists():
     # fallback list
     print("⚠️ requirements.txt not found. Using inline fallback list.")
     requirements = [
+        # Already present in your previous list
         "aiofiles",
         "aiohttp",
         "async-lru",
@@ -55,12 +56,14 @@ if not requirements_path.exists():
         "msal",
         "dash",
         "python-dotenv",
+        "geopandas",
+        "pycountry",
+        "matplotlib",
     ]
-#    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
     subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages"] + requirements, check=True)
 else:
-#    subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"], check=True)
     subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages", "-r", str(requirements_path)], check=True)
+
 
 # === Step 2: Install or update Google Chrome ===
 print("🌐 Checking Google Chrome installation...")
@@ -151,5 +154,4 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
-
 
