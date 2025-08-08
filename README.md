@@ -320,7 +320,7 @@ python3 shadow_server_data_analysis_system_builder_and_updater.py refresh countr
 |----|--------------------|-----------------------------------------------------------------------------|
 | 1  | **IMAP**           | Connects directly to mailbox via IMAP, extracts `.eml`, and saves attachments. |
 | 2  | **Microsoft Graph**| Uses Microsoft Graph API with OAuth2 for inbox access and attachment parsing. |
-| 3  | **Google Workspace**| Accesses Gmail API with OAuth2 credentials to retrieve and extract files.     |
+| 3  | **Google Workspace**| Accesses Gmail API with OAuth2 credentials to retrieve and extract files. Not yet Implemented   |
 
 
 ## Scrape Shadowserver Report Metadata (Run Before Report Generation)
