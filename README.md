@@ -68,7 +68,7 @@ Key features include:
 
 ![](docs/legal-okay.gif)
 
----
+
 ---
 ## Update – 1st August 2025
 
