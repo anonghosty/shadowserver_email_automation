@@ -90,6 +90,7 @@ Changes are currently being implemented and limits in Microsoft Graph downloads 
 - Tracker clear implementation yet to be done
 - Realised reported codes could expand to 6 characters accounted for that
 
+![](docs/hehe.gif)
 
 ---
 ## Tutorial – Setting up O365 Application for Microsoft Graph
