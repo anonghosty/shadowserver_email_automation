@@ -50,8 +50,6 @@ This section acknowledges the institutional input and guidance received during t
 
 ![Pdf_report](malicious_communication_reporting_new.png)
 
-**Dependency implementation in progress for threatmap reports**
-
 ![html_report](new_report_html_sample.png)
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
 
