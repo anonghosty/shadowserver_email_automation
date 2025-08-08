@@ -66,7 +66,7 @@ Key features include:
 - Full support for MongoDB-backed enrichment
 - Chrome + Selenium automation for scraping report metadata
 
-![](docs/thumbs-up-computer.gif)
+![](docs/legal-okay.gif)
 
 ---
 ---
