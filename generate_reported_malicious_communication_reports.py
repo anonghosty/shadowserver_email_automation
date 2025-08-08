@@ -7,6 +7,9 @@ import pycountry
 import matplotlib.pyplot as plt
 import pandas as pd
 import gc
+import os
+import requests
+import zipfile
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from reportlab.platypus import (
@@ -23,7 +26,74 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 
 
+
 yesterday = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
+
+def get_shapefile_path(shapefile_type="admin_0_countries"):
+    """
+    Ensure Natural Earth shapefile exists locally. If not, download and extract it.
+    
+    shapefile_type options:
+        - "admin_0_countries" (Country boundaries)
+        - "admin_1_states_provinces" (Regional boundaries)
+    
+    Returns:
+        Path to the .shp file.
+    """
+    
+    # Map shapefile type to URL and folder name
+    natural_earth_urls = {
+        "admin_0_countries": {
+            "url": "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip",
+            "folder": "data/ne_110m_admin_0_countries"
+        }
+    }
+    
+    if shapefile_type not in natural_earth_urls:
+        raise ValueError("Invalid shapefile_type. Choose 'admin_0_countries'")
+    
+    url = natural_earth_urls[shapefile_type]["url"]
+    folder = natural_earth_urls[shapefile_type]["folder"]
+    
+    # Create data directory if it doesn't exist
+    os.makedirs("data", exist_ok=True)
+    
+    # Check if already exists
+    shp_file = None
+    if os.path.exists(folder):
+        for f in os.listdir(folder):
+            if f.endswith(".shp"):
+                shp_file = os.path.join(folder, f)
+                break
+        if shp_file:
+            return shp_file  # Already downloaded
+    
+    # If not found, download
+    print(f"Downloading {shapefile_type} shapefile...")
+    zip_path = f"{folder}.zip"
+    response = requests.get(url)
+    with open(zip_path, "wb") as f:
+        f.write(response.content)
+    
+    # Extract
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        zip_ref.extractall(folder)
+    
+    os.remove(zip_path)  # Clean up
+    
+    # Return .shp path
+    for f in os.listdir(folder):
+        if f.endswith(".shp"):
+            shp_file = os.path.join(folder, f)
+            break
+    
+    return shp_file
+shapefile_path = get_shapefile_path("admin_0_countries")
+print(f"Shapefile path: {shapefile_path}")
+
+
+
 def get_country_name(iso_code):
     try:
         return pycountry.countries.get(alpha_2=iso_code).name
@@ -214,7 +284,7 @@ def main():
     client = MongoClient(mongo_uri)
     db_names = client.list_database_names()
 
-    yesterday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
+    yesterday = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).date()
     today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
     for db_name in db_names:
