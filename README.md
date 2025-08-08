@@ -75,6 +75,10 @@ Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/instal
 ├── generate_statistics_reported_from_shadowserver_unverified.py
 ├── get_shadowserver_report_types.py
 ├── shadow_server_data_analysis_system_builder_and_updater.py
+├── report_template.html
+├── reset_db_by_deleting all _as databases.py
+├── generate_reported_malicious_communication_reports.py
+├── portable_analytics_dashboard.py
 ├── LICENSE                                       # MIT (Modified)
 ├── .env                                          # Configuration file
 └── README.md
@@ -117,22 +121,28 @@ Get latest Mongo repo here: [https://www.mongodb.com/docs/manual/tutorial/instal
 
 Install via pip:
 ```Packages
-| #  | Package          | Purpose                                                         |
-| -- | ---------------- | --------------------------------------------------------------- |
-| 1  | `aiofiles`       | Asynchronous file operations without blocking the event loop    |
-| 2  | `aiohttp`        | Asynchronous HTTP requests and web client support               |
-| 3  | `async-lru`      | Caching for async functions to improve performance              |
-| 4  | `beautifulsoup4` | HTML/XML parsing for web scraping and document analysis         |
-| 5  | `bs4`            | Import alias for BeautifulSoup (required by some packages)      |
-| 6  | `colorama`       | Cross-platform colored terminal output                          |
-| 7  | `pandas`         | High-level data structures and analysis tools for CSV/JSON      |
-| 8  | `pymongo`        | MongoDB driver to insert and query intelligence data            |
-| 9  | `py7zr`          | 7-Zip archive extraction and creation                           |
-| 10 | `rarfile`        | Handle `.rar` files                                             |
-| 11 | `reportlab`      | Generate structured PDF reports dynamically                     |
-| 12 | `selenium`       | Web automation for browser-based scraping or headless downloads |
-| 13 | `tqdm`           | Lightweight progress bars in loops and pipelines                |
-| 14 | `python-dotenv`  | Load environment variables from `.env` for config and secrets   |
+
+| #  | Package          | Purpose                                                                                |
+| -- | ---------------- | -------------------------------------------------------------------------------------- |
+| 1  | `aiofiles`       | Asynchronous file operations without blocking the event loop                           |
+| 2  | `aiohttp`        | Asynchronous HTTP requests and web client support                                      |
+| 3  | `async-lru`      | Caching for async functions to improve performance                                     |
+| 4  | `beautifulsoup4` | HTML/XML parsing for web scraping and document analysis                                |
+| 5  | `bs4`            | Import alias for BeautifulSoup (required by some packages)                             |
+| 6  | `colorama`       | Cross-platform colored terminal output                                                 |
+| 7  | `pandas`         | High-level data structures and analysis tools for CSV/JSON                             |
+| 8  | `pymongo`        | MongoDB driver to insert and query intelligence data                                   |
+| 9  | `py7zr`          | 7-Zip archive extraction and creation                                                  |
+| 10 | `rarfile`        | Handle `.rar` files                                                                    |
+| 11 | `reportlab`      | Generate structured PDF reports dynamically                                            |
+| 12 | `selenium`       | Web automation for browser-based scraping or headless downloads                        |
+| 13 | `tqdm`           | Lightweight progress bars in loops and pipelines                                       |
+| 14 | `python-dotenv`  | Load environment variables from `.env` for config and secrets                          |
+| 15 | `msal`           | Microsoft Authentication Library for Azure AD integration and secure token acquisition |
+| 16 | `dash`           | Framework for building interactive web dashboards using Python                         |
+| 17 | `geopandas`      | Extend Pandas for geospatial data handling and mapping                                 |
+| 18 | `pycountry`      | Access ISO country, subdivision, currency, and language lists                          |
+| 19 | `matplotlib`     | Data visualization and chart plotting for analytics and reports                        |
 
 ```
 
@@ -144,6 +154,7 @@ Install via pip:
 <summary>Click to view example .env configuration</summary>
 
 ```dotenv
+
 # MongoDB credentials
 mongo_username="anon"
 mongo_password="input password"
@@ -199,6 +210,7 @@ anomaly_pattern_3="^\d{4}-\d{2}-\d{2}-(.*?)-<input_country_here>-geo\.csv$"
 
 enable_anomaly_pattern_4="false"
 anomaly_pattern_4=""
+
 ```
 </details> 
 
