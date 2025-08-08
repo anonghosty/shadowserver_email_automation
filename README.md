@@ -304,7 +304,7 @@ ingest  → Ingest Cleaned Shadowserver Data into the Knowledgebase (Databases &
 |--------------------|---------------------------------------------|
 | **IMAP**           | Connects to mailbox directly and parses `.eml` attachments. |
 | **Microsoft Graph**| Uses OAuth2 to access mail via Microsoft 365 Graph API. |
-| **Google Workspace**| Authenticates with Gmail API to retrieve attachments. |
+| **Google Workspace**| Authenticates with Gmail API to retrieve attachments. Not yet Implemented |
 
 ### 🧭 Task Flow When Using `all`
 
