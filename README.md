@@ -53,7 +53,7 @@ This section acknowledges the institutional input and guidance received during t
 
 This project automates the collection, parsing, categorization, and reporting of threat intelligence feeds from [Shadowserver](https://www.shadowserver.org/), eliminating the complexities many CERTs have faced for years.
 
-![](dos/fed_up.gif)
+![](docs/fed_up.gif)
 
 Key features include:
 
