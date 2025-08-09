@@ -39,11 +39,13 @@ This section acknowledges the institutional input and guidance received during t
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 
 ![Tracker](tracker_sample.png)
+
 ![Whois Sort](whois_sample.png)
   
 - Country and service-based categorization
 
 ![Country Sort](country_sort_example.png)
+
 ![Service Sort](service_sample.png)
 
 - 3 flavored variations for report generation daily - CSV {can be used in automation}, PDFs {can be be used in official reporting also added threatmap reports for visualisation of malicious communication }, HTML {has charts and search bars}
@@ -51,12 +53,15 @@ This section acknowledges the institutional input and guidance received during t
 ![Pdf_report](malicious_communication_reporting_new.png)
 
 ![html_report](new_report_html_sample.png)
+
 ![Severity Pie Chart](pie_chart_severity_display_sample.png)
 
 - MongoDB-based enrichment and storage
+  
 ![Knowledge](knowledge_sample.png)
 
 - Metadata scraping using Selenium + Chrome
+  
 ![metadata](metadata_sample.png)
 
 - Portable Dashboard Showcasing Trends and Bar Charts For Organisation,Date and Category Comparisons
