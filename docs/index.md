@@ -34,11 +34,13 @@ This section acknowledges the institutional input and guidance received during t
 
 - ZIP, RAR, and 7z archive extraction
 
+(Directory Sample)
+
 ![Archive Sort](sorted_sample.png)
 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 
-(Directory Sample)
+(Folder Samples)
 
 ![Tracker](tracker_sample.png)
 
@@ -51,6 +53,9 @@ This section acknowledges the institutional input and guidance received during t
 ![Country Sort](country_sort_example.png)
 
 ![Service Sort](service_sample.png)
+
+
+
 
 - 3 flavored variations for report generation daily - CSV {can be used in automation}, PDFs {can be be used in official reporting also added threatmap reports for visualisation of malicious communication }, HTML {has charts and search bars}
 
