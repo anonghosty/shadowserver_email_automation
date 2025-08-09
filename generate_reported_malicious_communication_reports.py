@@ -10,6 +10,10 @@ import gc
 import os
 import requests
 import zipfile
+import base64
+import sys
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from reportlab.platypus import (
@@ -25,7 +29,19 @@ from collections import defaultdict
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 
+author = "Ike Owuraku Amponsah"
+linkedin_url = "https://www.linkedin.com/in/iowuraku"
+docs_url = "https://anonghosty.github.io/shadowserver_email_automation/"
+license_url = "https://raw.githubusercontent.com/anonghosty/shadowserver_email_automation/refs/heads/main/LICENSE"
 
+# ANSI escape sequence for clickable links in terminal
+def clickable(text, url):
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+print("Author:", author)
+print("LinkedIn:", clickable(linkedin_url, linkedin_url))
+print("Documentation:", clickable(docs_url, docs_url))
+print("License:", clickable(license_url, license_url))
 
 yesterday = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
