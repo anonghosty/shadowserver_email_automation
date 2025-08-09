@@ -124,6 +124,9 @@ def create_attack_map(attack_data, output_path):
     centroids_proj = world_proj.set_index('ISO_A2').centroid
     country_centroids = centroids_proj.to_crs(world.crs).to_dict()
 
+    src_countries = set()
+    dst_countries = set()
+
     for src_country, dst_country, count in attack_data:
         if src_country not in country_centroids or dst_country not in country_centroids:
             continue
@@ -131,13 +134,26 @@ def create_attack_map(attack_data, output_path):
         dst_point = country_centroids[dst_country]
         ax.plot([src_point.x, dst_point.x], [src_point.y, dst_point.y],
                 color='red', linewidth=0.5 + min(count / 10, 3), alpha=0.6)
+        src_countries.add(src_country)
+        dst_countries.add(dst_country)
 
     ax.set_title(f"Visualisation of Reported Malicious Communication ({yesterday})", fontsize=16)
     ax.axis('off')
+
+    # Prepare text
+    src_list = ", ".join(sorted(src_countries))
+    dst_list = ", ".join(sorted(dst_countries))
+    label_text = f"Sources: {src_list}   |   Destinations: {dst_list}"
+
+    # Position text just below the plot area
+    fig.subplots_adjust(bottom=0.15)  # leave extra space at bottom
+    fig.text(0.5, 0.08, label_text, ha="center", fontsize=10, wrap=True)
+
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close(fig)
     del fig, ax
+
 
 def get_severity_color(severity):
     sev = severity.lower()
