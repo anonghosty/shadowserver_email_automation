@@ -38,19 +38,23 @@ This section acknowledges the institutional input and guidance received during t
 
 - CSV parsing, validation, and enrichment (IP, ASN, WHOIS)
 
+(Directory Sample)
+
 ![Tracker](tracker_sample.png)
 
 ![Whois Sort](whois_sample.png)
 
 - Country and service-based categorization
 
+(Folder Samples)
 
 ![Country Sort](country_sort_example.png)
 
 ![Service Sort](service_sample.png)
 
-
 - 3 flavored variations for report generation daily - CSV {can be used in automation}, PDFs {can be be used in official reporting also added threatmap reports for visualisation of malicious communication }, HTML {has charts and search bars}
+
+(Report Output Samples)
 
 ![Pdf_report](malicious_communication_reporting_new.png)
 
@@ -67,6 +71,8 @@ This section acknowledges the institutional input and guidance received during t
 ![metadata](metadata_sample.png)
 
 - Portable Dashboard Showcasing Trends and Bar Charts For Organisation,Date and Category Comparisons
+
+(Dashboard Sample)
 
 ![Portable Dashbboard Trends and Configuration Flavors](portable_dashboard_visualisation_new.png)
 
