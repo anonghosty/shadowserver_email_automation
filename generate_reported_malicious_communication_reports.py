@@ -213,15 +213,18 @@ def generate_pdf_report(org_name, db_name, collection_attacks, pdf_path, cert_na
         story.append(Paragraph(f"<b>Description:</b> {data.get('description', 'No description available.')}", styles['Normal']))
         story.append(Paragraph(f"<b>Reference:</b> <a href='{data.get('reference', '')}'>{data.get('reference', '')}</a>", styles['Normal']))
         story.append(Spacer(1, 8))
-
+        
         # Attack Summary
         story.append(Paragraph("<b> Reported Malicious Communication Summary:</b>", styles['Normal']))
         story.append(Paragraph("Note: 'ZZ' indicates that the destination country is unknown.", styles['Normal']))
-        for src, dst, count in data['attacks']:
+        attacks_list = sorted(data['attacks'], key=lambda x: x[2], reverse=True)
+        for idx, (src, dst, count) in enumerate(attacks_list, start=1):
             src_name = get_country_name(src)
             dst_name = get_country_name(dst)
-            story.append(Paragraph(f"Malicious communication reported between {src_name} and {dst_name}: {count} events", styles['Normal']))
+            story.append(Paragraph(f"{idx}. Malicious communication reported between {src_name} and {dst_name}: {count} events", styles['Normal']))
         story.append(Spacer(1, 12))
+
+
 
         # Attack Map
         story.append(Image(data['map'], width=500, height=280))
