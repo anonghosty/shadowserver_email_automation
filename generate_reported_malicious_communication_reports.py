@@ -335,11 +335,17 @@ def main():
                 raw_count = collection.count_documents(yday_query)
                 valid_attack_count = 0
 
-                for doc in collection.find(yday_query, {"src_geo": 1, "dst_geo": 1}):
-                    src_geo = (doc.get("src_geo") or "ZZ").upper()
-                    dst_geo = (doc.get("dst_geo") or "ZZ").upper()
-                    if src_geo and dst_geo and src_geo != dst_geo:
+                for doc in collection.find(yday_query, {"src_geo": 1, "dst_geo": 1, "src_ip": 1, "http_referer_ip": 1, "http_referer_geo": 1}):
+                    if doc.get("src_geo"):
+                        src_geo = doc["src_geo"].upper()
+                    elif doc.get("http_referer_geo"):
+                        src_geo = doc["http_referer_geo"].upper()
+                    else:
+                        src_geo = "ZZ"
 
+                    dst_geo = (doc.get("dst_geo") or "ZZ").upper()
+
+                    if src_geo != "ZZ" and dst_geo != "ZZ" and src_geo != dst_geo:
                         attack_counter[src_geo][dst_geo] += 1
 
                 #print(f"→ Raw DB Count: {raw_count}")
