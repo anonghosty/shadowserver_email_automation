@@ -333,7 +333,12 @@ def main():
                 if not attacks:
                     continue
 
-                map_path = os.path.join(org_dir, f"{safe_filename(org)}_{today_str}_{safe_filename(col_name)}_map.png")
+                maps_dir = os.path.join(org_dir, "generated_threatmaps")
+                os.makedirs(maps_dir, exist_ok=True)
+                map_path = os.path.join(
+                    maps_dir,
+                    f"{safe_filename(org)}_{today_str}_{safe_filename(col_name)}_map.png"
+                )
                 create_attack_map(attacks, map_path)
 
                 meta = desc_lookup.get(col_name, {})
