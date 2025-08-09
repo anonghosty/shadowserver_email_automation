@@ -220,7 +220,7 @@ def generate_pdf_report(org_name, db_name, collection_attacks, pdf_path, cert_na
         for src, dst, count in data['attacks']:
             src_name = get_country_name(src)
             dst_name = get_country_name(dst)
-            story.append(Paragraph(f"{src_name} → {dst_name}: {count} events", styles['Normal']))
+            story.append(Paragraph(f"Malicious communication reported {src_name} between {dst_name}: {count} events", styles['Normal']))
         story.append(Spacer(1, 12))
 
         # Attack Map
