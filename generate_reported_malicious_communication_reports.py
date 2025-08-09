@@ -143,7 +143,7 @@ def create_attack_map(attack_data, output_path):
     # Prepare text
     src_list = ", ".join(sorted(src_countries))
     dst_list = ", ".join(sorted(dst_countries))
-    label_text = f"Sources: {src_list}   |   Destinations: {dst_list}"
+    label_text = f"Location: {src_list}   |   Malicious Communication: {dst_list}"
 
     # Position text just below the plot area
     fig.subplots_adjust(bottom=0.15)  # leave extra space at bottom
