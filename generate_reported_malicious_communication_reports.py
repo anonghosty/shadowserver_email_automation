@@ -216,7 +216,7 @@ def generate_pdf_report(org_name, db_name, collection_attacks, pdf_path, cert_na
         
         # Attack Summary
         story.append(Paragraph("<b> Reported Malicious Communication Summary:</b>", styles['Normal']))
-        story.append(Paragraph("Note: 'ZZ' indicates that the destination country is unknown.", styles['Normal']))
+        story.append(Paragraph("<b><i>Note:</i></b> <i>'ZZ' indicates that the destination country is unknown.</i>", styles['Normal']))
         attacks_list = sorted(data['attacks'], key=lambda x: x[2], reverse=True)
         for idx, (src, dst, count) in enumerate(attacks_list, start=1):
             src_name = get_country_name(src)
