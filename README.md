@@ -62,7 +62,7 @@ Key features include:
 - CSV validation, geo/IP/ASN enrichment
 - Organization mapping and alert tracking
 - 4 flavored variations for report generation daily - CSV {can be used in automation}, 2 PDFs {can be be used in official reporting}, HTML {has charts and search bars}
-- Portable dashboard for quick visualisation in meetings,  for current threat landscape reports, meetings and decisions on advisory dissemination
+- Portable dashboard for quick visualisation in meetings,  for current threat landscape reports and decisions on advisory dissemination
 - Full support for MongoDB-backed enrichment
 - Chrome + Selenium automation for scraping report metadata
 
