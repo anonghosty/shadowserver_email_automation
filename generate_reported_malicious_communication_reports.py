@@ -4,37 +4,31 @@ import csv
 import datetime
 import geopandas as gpd
 import pycountry
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 import pandas as pd
 import gc
-import os
 import requests
 import zipfile
-import base64
-import sys
-#from Crypto.Cipher import AES
-#from Crypto.Util.Padding import unpad
+from collections import defaultdict
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image, Table, TableStyle
+    SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.enums import TA_RIGHT
-from reportlab.lib import colors
-from collections import defaultdict
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm
 
 author = "Ike Owuraku Amponsah"
 linkedin_url = "https://www.linkedin.com/in/iowuraku"
 docs_url = "https://anonghosty.github.io/shadowserver_email_automation/"
 license_url = "https://raw.githubusercontent.com/anonghosty/shadowserver_email_automation/refs/heads/main/LICENSE"
 
-# ANSI escape sequence for clickable links in terminal
 def clickable(text, url):
     return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
 
@@ -45,68 +39,103 @@ print("License:", clickable(license_url, license_url))
 
 yesterday = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
-
-def get_shapefile_path(shapefile_type="admin_0_countries"):
-    """
-    Ensure Natural Earth shapefile exists locally. If not, download and extract it.
-    
-    shapefile_type options:
-        - "admin_0_countries" (Country boundaries)
-        - "admin_1_states_provinces" (Regional boundaries)
-    
-    Returns:
-        Path to the .shp file.
-    """
-    
-    # Map shapefile type to URL and folder name
+def get_shapefile_path(shapefile_type="admin_0_countries_110m"):
     natural_earth_urls = {
-        "admin_0_countries": {
+        "admin_0_countries_110m": {
             "url": "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip",
             "folder": "data/ne_110m_admin_0_countries"
+        },
+        "admin_0_countries_50m": {
+            "url": "https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_0_countries.zip",
+            "folder": "data/ne_50m_admin_0_countries"
+        },
+        "admin_0_countries_10m": {
+            "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries.zip",
+            "folder": "data/ne_10m_admin_0_countries"
         }
     }
-    
+
     if shapefile_type not in natural_earth_urls:
-        raise ValueError("Invalid shapefile_type. Choose 'admin_0_countries'")
-    
+        raise ValueError("Invalid shapefile_type. Choose from: 'admin_0_countries_110m', 'admin_0_countries_50m', 'admin_0_countries_10m'.")
+
     url = natural_earth_urls[shapefile_type]["url"]
     folder = natural_earth_urls[shapefile_type]["folder"]
-    
-    # Create data directory if it doesn't exist
     os.makedirs("data", exist_ok=True)
-    
-    # Check if already exists
-    shp_file = None
+
+    # Check if folder and .shp file already exist
     if os.path.exists(folder):
-        for f in os.listdir(folder):
-            if f.endswith(".shp"):
-                shp_file = os.path.join(folder, f)
-                break
-        if shp_file:
-            return shp_file  # Already downloaded
-    
-    # If not found, download
+        shp_files = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(".shp")]
+        if shp_files:
+            return shp_files[0]
+
+    # If not found, download zip
     print(f"Downloading {shapefile_type} shapefile...")
     zip_path = f"{folder}.zip"
     response = requests.get(url)
+    response.raise_for_status()  # raise if bad response
     with open(zip_path, "wb") as f:
         f.write(response.content)
-    
-    # Extract
+
+    # Extract zip
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         zip_ref.extractall(folder)
-    
-    os.remove(zip_path)  # Clean up
-    
-    # Return .shp path
-    for f in os.listdir(folder):
-        if f.endswith(".shp"):
-            shp_file = os.path.join(folder, f)
-            break
-    
-    return shp_file
-shapefile_path = get_shapefile_path("admin_0_countries")
-print(f"Shapefile path: {shapefile_path}")
+    os.remove(zip_path)
+
+    # Verify extraction succeeded by locating .shp
+    shp_files = [os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(".shp")]
+    if shp_files:
+        print(f"Extracted shapefile(s) for {shapefile_type}:")
+        for shp in shp_files:
+            print(f" - {shp}")
+   
+
+    if shp_files:
+        print(f"Extracted shapefile(s) for {shapefile_type}:")
+        for shp in shp_files:
+            print(f" - {shp}")
+        return shp_files[0]  # <-- This was missing!
+
+    raise FileNotFoundError(f"No .shp file found in {folder} after extraction.")
+
+
+shapefile_cache = {}
+gdf_cache = {}
+
+def select_best_shapefile(required_codes, verbose=True):
+    ignored_codes = {"ZZ"}  # codes to ignore
+    filtered_codes = {code for code in required_codes if code not in ignored_codes}
+
+    shapefile_order = ["admin_0_countries_10m", "admin_0_countries_50m", "admin_0_countries_110m"]
+
+    for shapefile_type in shapefile_order:
+        # Load shapefile path with cache
+        if shapefile_type not in shapefile_cache:
+            path = get_shapefile_path(shapefile_type)
+            shapefile_cache[shapefile_type] = path
+        else:
+            path = shapefile_cache[shapefile_type]
+
+        # Load GeoDataFrame with cache
+        if shapefile_type not in gdf_cache:
+            gdf_cache[shapefile_type] = gpd.read_file(path)
+
+        gdf = gdf_cache[shapefile_type]
+        available = set(gdf["ISO_A2"].dropna().str.upper())
+
+        if filtered_codes.issubset(available):
+            if verbose:
+                print(f"\nGenerating Next Map(s) and Report")
+            return path, shapefile_type
+
+    # Fallback to the lowest resolution if none matched fully
+    fallback_type = "admin_0_countries_110m"
+    if fallback_type not in shapefile_cache:
+        shapefile_cache[fallback_type] = get_shapefile_path(fallback_type)
+
+    if verbose:
+        print(f"INFO: Incase of Fallbacks: {shapefile_type} {fallback_type}")
+    return shapefile_cache[fallback_type], fallback_type
+
 
 
 
@@ -120,289 +149,270 @@ def safe_filename(name):
     return re.sub(r'\W+', '_', name.lower()).strip('_')
 
 def load_asn_mapping(csv_path):
-    asn_to_org = {}
-    with open(csv_path, newline='', encoding='utf-8-sig') as csvfile:
-        reader = csv.DictReader(csvfile)
+    mapping = {}
+    with open(csv_path, newline='', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
         for row in reader:
             org = row["org_name"].strip()
-            asns = row["asn"].split(",")
-            for asn in asns:
-                clean_asn = asn.strip()
-                if clean_asn:
-                    asn_to_org[clean_asn] = org
-    return asn_to_org
+            for asn in row["asn"].split(","):
+                if asn.strip():
+                    mapping[asn.strip()] = org
+    return mapping
 
-def create_attack_map(attack_data, output_path):
-    world = gpd.read_file("data/ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+def create_attack_map(attack_data, output_path, shapefile_path):
+    world = gpd.read_file(shapefile_path)
     fig, ax = plt.subplots(figsize=(14, 8))
     world.plot(ax=ax, color='lightgrey', edgecolor='white')
+
+    # Project world to metric CRS for accurate centroid calculation
     world_proj = world.to_crs(epsg=3857)
     centroids_proj = world_proj.set_index('ISO_A2').centroid
-    country_centroids = centroids_proj.to_crs(world.crs).to_dict()
 
-    src_countries = set()
-    dst_countries = set()
+    # Convert centroids back to original geographic CRS (e.g., EPSG:4326)
+    centroids = centroids_proj.to_crs(world.crs)
 
-    for src_country, dst_country, count in attack_data:
-        if src_country not in country_centroids or dst_country not in country_centroids:
+    # Convert to dictionary: {country_code: Point}
+    centroid_dict = centroids.to_dict()
+
+    src_set, dst_set = set(), set()
+    for src, dst, count in attack_data:
+        if src not in centroid_dict or dst not in centroid_dict:
             continue
-        src_point = country_centroids[src_country]
-        dst_point = country_centroids[dst_country]
-        ax.plot([src_point.x, dst_point.x], [src_point.y, dst_point.y],
+        sp, dp = centroid_dict[src], centroid_dict[dst]
+        ax.plot([sp.x, dp.x], [sp.y, dp.y],
                 color='red', linewidth=0.5 + min(count / 10, 3), alpha=0.6)
-        src_countries.add(src_country)
-        dst_countries.add(dst_country)
+        src_set.add(src)
+        dst_set.add(dst)
 
-    ax.set_title(f"Visualisation of Reported Malicious Communication ({yesterday})", fontsize=16)
+    ax.set_title(f"Reported Malicious Communication ({yesterday})", fontsize=16)
     ax.axis('off')
 
-    # Prepare text
-    src_list = ", ".join(sorted(src_countries))
-    dst_list = ", ".join(sorted(dst_countries))
-    label_text = f"Location: {src_list}   |   Malicious Communication: {dst_list}"
-
-    # Position text just below the plot area
-    fig.subplots_adjust(bottom=0.15)  # leave extra space at bottom
-    fig.text(0.5, 0.08, label_text, ha="center", fontsize=10, wrap=True)
+    fig.subplots_adjust(bottom=0.15)
+    label = f"From: {', '.join(sorted(src_set))} | To: {', '.join(sorted(dst_set))}"
+    fig.text(0.5, 0.08, label, ha="center", fontsize=10, wrap=True)
 
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close(fig)
     del fig, ax
 
-
-def get_severity_color(severity):
-    sev = severity.lower()
-    if sev in ['high', 'critical']:
-        return colors.red
-    elif sev in ['medium']:
-        return colors.orange
-    elif sev in ['low']:
-        return colors.green
-    else:
-        return colors.black
+    return src_set, dst_set
 
 
 
+def get_severity_color(sev):
+    s = sev.lower()
+    return colors.red if s in ['high', 'critical'] else colors.orange if s == 'medium' else colors.green if s == 'low' else colors.black
 
-def generate_pdf_report(org_name, db_name, collection_attacks, pdf_path, cert_name):
-    today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    reference_number = f"{org_name[:3].upper()}-{today_date.replace('-', '')}"
-
+def generate_pdf_report(org, db, coll_atks, pdf_path, cert_name):
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    ref_num = f"{org[:3].upper()}-{today.replace('-', '')}"
     doc = SimpleDocTemplate(pdf_path, pagesize=A4)
-    doc.title = f"{org_name}'s Destination Based Events Reported by Shadowserver"
+    doc.title = f"{org} Shadowserver Report"
     doc.author = cert_name
-    doc.subject = "Destination Based Events Reported by Shadowserver"
-
-    styles = getSampleStyleSheet()
     story = []
+    styles = getSampleStyleSheet()
 
-    # Logo (top-right)
-    logo_path = "logo.png"
-    if os.path.exists(logo_path):
-        img = Image(logo_path, width=60, height=60)
-        img.hAlign = "RIGHT"
-        story.append(img)
-
-    # Header content
-    story.append(Paragraph("Destination Based Events Reported by Shadowserver", styles["Title"]))
-    story.append(Paragraph(f"Organization: <b>{org_name}</b>", styles["Heading2"]))
-    story.append(Paragraph(
-        f'<b><font color="orange">TLP:AMBER</font></b> – confidential between the stakeholder (organization) and the {cert_name}',
-        styles["Normal"]
-    ))
-    story.append(Paragraph(f"<b>Report Category:</b> statistical_report", styles["Normal"]))
-    story.append(Paragraph(f"<b>Generated on:</b> {today_date}", styles["Normal"]))
-
+    # Header
+    story.append(Paragraph("Destination-Based Events Reported by Shadowserver", styles["Title"]))
+    story.append(Paragraph(f"Organization: <b>{org}</b>", styles["Heading2"]))
+    story.append(Paragraph(f"<b>Generated on:</b> {today}", styles["Normal"]))
     story.append(Spacer(1, 12))
 
-    # Report content
-    for col, data in collection_attacks.items():
-        title_text = f"<b>{data.get('title', 'Untitled Report')} ({col})</b>"
-        story.append(Paragraph(title_text, styles['Heading2']))
-        story.append(Spacer(1, 6))
-
-        severity_color = get_severity_color(data.get("severity", "Unknown"))
-        custom_style = ParagraphStyle('SeverityStyle', parent=styles['Normal'], textColor=severity_color)
-
-        story.append(Paragraph(f"<b>Severity:</b> {data.get('severity', 'Unknown')}", custom_style))
-        story.append(Paragraph(f"<b>Description:</b> {data.get('description', 'No description available.')}", styles['Normal']))
-        story.append(Paragraph(f"<b>Reference:</b> <a href='{data.get('reference', '')}'>{data.get('reference', '')}</a>", styles['Normal']))
+    for col, data in coll_atks.items():
+        story.append(Paragraph(f"<b>{data['title']} ({col})</b>", styles["Heading2"]))
+        sev_color = get_severity_color(data.get("severity", "Unknown"))
+        story.append(Paragraph(f"<b>Severity:</b> {data.get('severity', 'Unknown')}", ParagraphStyle('sev', textColor=sev_color)))
+        story.append(Paragraph(f"<b>Description:</b> {data.get('description', '')}", styles["Normal"]))
         story.append(Spacer(1, 8))
-        
-        # Attack Summary
-        story.append(Paragraph("<b> Reported Malicious Communication Summary:</b>", styles['Normal']))
-        story.append(Paragraph("<b><i>Note:</i></b> <i>'ZZ' indicates that the destination country is unknown.</i>", styles['Normal']))
-        attacks_list = sorted(data['attacks'], key=lambda x: x[2], reverse=True)
-        for idx, (src, dst, count) in enumerate(attacks_list, start=1):
-            src_name = get_country_name(src)
-            dst_name = get_country_name(dst)
-            story.append(Paragraph(f"{idx}. Malicious communication reported between {src_name} and {dst_name}: {count} events", styles['Normal']))
+
+        for idx, (src, dst, count) in enumerate(sorted(data['attacks'], key=lambda x: x[2], reverse=True), 1):
+            story.append(Paragraph(f"{idx}. {get_country_name(src)} → {get_country_name(dst)}: {count} events", styles["Normal"]))
         story.append(Spacer(1, 12))
-
-
-
-        # Attack Map
         story.append(Image(data['map'], width=500, height=280))
         story.append(PageBreak())
 
-    # Footer function with TLP and page number
-    def add_page_number(canvas, doc):
-        canvas.saveState()
-        canvas.setFont("Helvetica", 8)
+    def footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont("Helvetica", 8)
+        msg = f"TLP:AMBER – Confidential | Reference: {ref_num}"
+        canvas_obj.drawString(0.7 * inch, 0.2 * inch, msg)
+        canvas_obj.drawRightString(11 * inch, 0.2 * inch, f"Page {doc_obj.page}")
+        canvas_obj.restoreState()
 
-        x_left = 0.7 * inch
-        y_footer = 0.2 * inch
-
-        # Draw "TLP:"
-        canvas.setFillColor(colors.black)
-        canvas.drawString(x_left, y_footer, "TLP:")
-        x_left += canvas.stringWidth("TLP:", "Helvetica", 8) + 2
-
-        # Draw "AMBER"
-        canvas.setFont("Helvetica-Bold", 8)
-        canvas.setFillColor(HexColor("#FFBF00"))
-        canvas.drawString(x_left, y_footer, "AMBER")
-        x_left += canvas.stringWidth("AMBER", "Helvetica-Bold", 8) + 2
-
-        # Draw "– Confidential"
-        canvas.setFont("Helvetica-Bold", 8)
-        canvas.setFillColor(colors.black)
-        confidential_text = f"– Confidential between the stakeholder (organization) and the {cert_name}"
-        canvas.drawString(x_left, y_footer, confidential_text)
-        x_left += canvas.stringWidth(confidential_text, "Helvetica-Bold", 8) + 2
-
-        # Draw reference number
-        canvas.setFont("Helvetica", 8)
-        canvas.drawString(x_left, y_footer, "| Reference: ")
-        x_left += canvas.stringWidth("| Reference: ", "Helvetica", 8)
-
-        canvas.setFont("Helvetica-Bold", 8)
-        canvas.drawString(x_left, y_footer, reference_number)
-
-        # Page number (bottom-right)
-        canvas.setFont("Helvetica", 8)
-        canvas.drawRightString(11 * inch, y_footer, f"Page {doc.page}")
-        canvas.restoreState()
-
-    # Build the document with custom footer
-    doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
-
-
+    doc.build(story, onFirstPage=footer, onLaterPages=footer)
 
 def main():
     load_dotenv()
     cert_name = os.getenv("cert_name", "CERT Intelligence Team")
-
-    mongo_uri = (
+    client = MongoClient(
         f"mongodb://{os.getenv('mongo_username')}:{os.getenv('mongo_password')}@"
-        f"{os.getenv('mongo_host', '127.0.0.1')}:{int(os.getenv('mongo_port', 27017))}/"
+        f"{os.getenv('mongo_host', '127.0.0.1')}:{os.getenv('mongo_port', 27017)}/"
         f"?authSource={os.getenv('mongo_auth_source', 'admin')}"
     )
 
-    csv_path = os.path.join("shadowserver_analysis_system", "detected_companies", "constituent_map.csv")
-    asn_to_org = load_asn_mapping(csv_path)
-
-    desc_path = os.path.join("shadowserver_url_descriptions", "shadowserver_report_types.csv")
-    desc_df = pd.read_csv(desc_path)
+    asn_map = load_asn_mapping(os.path.join("shadowserver_analysis_system", "detected_companies", "constituent_map.csv"))
+    desc_df = pd.read_csv(os.path.join("shadowserver_url_descriptions", "shadowserver_report_types.csv"))
     desc_lookup = {
         row["Filename"]: {
-            "title": row.get("Title", "Untitled Report"),
+            "title": row.get("Title", "Untitled"),
             "severity": row.get("Severity", "Unknown"),
-            "description": row.get("Description", "No description available."),
-            "reference": row.get("URL", "N/A")
+            "description": row.get("Description", ""),
         }
         for _, row in desc_df.iterrows()
     }
 
-
-    client = MongoClient(mongo_uri)
-    db_names = client.list_database_names()
-
-    yesterday = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).date()
+    yesterday_date = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=1)).date()
     today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    for db_name in db_names:
+    all_codes = set()
+    dbs = client.list_database_names()
+    for db_name in dbs:
+        match = re.search(r"_as(\d+)", db_name)
+        if not match:
+            continue
+
+        colls = client[db_name].list_collection_names()
+        for col in colls:
+            if col.startswith("files_"):
+                continue
+            query = {"extracted_date": {"$gte": datetime.datetime.combine(yesterday_date, datetime.time.min, tzinfo=datetime.timezone.utc),
+                                        "$lt": datetime.datetime.combine(yesterday_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=datetime.timezone.utc)}}
+            for doc in client[db_name][col].find(query, {"src_geo": 1, "dst_geo": 1, "http_referer_geo": 1}):
+                src = doc.get("src_geo") or doc.get("http_referer_geo")
+                dst = doc.get("dst_geo")
+                if src: all_codes.add(src.upper())
+                if dst: all_codes.add(dst.upper())
+
+    def clean_codes(codes):
+        valid_codes = set()
+        for c in codes:
+            c = c.upper()
+            if c == "UK":
+                c = "GB"  # correct ISO code
+            if len(c) == 2 and c.isalpha():
+                valid_codes.add(c)
+        return valid_codes
+
+
+    
+    all_codes = clean_codes(all_codes)
+    print("Cleaned all country codes:", sorted(all_codes))					
+					
+    shapefile_path = select_best_shapefile(all_codes)
+
+    dbs = client.list_database_names()
+
+    for db_name in dbs:
         match = re.search(r"_as(\d+)", db_name)
         if not match:
             continue
         asn = match.group(1)
-        org = asn_to_org.get(asn)
+        org = asn_map.get(asn)
         if not org:
             continue
 
+        # Collect country codes for this org's db
+        # Collect country codes for this org's db
+        required_codes = set()
         db = client[db_name]
-        collections = [c for c in db.list_collection_names() if not c.startswith("files_")]
-        yday_collections = []
-        collection_attacks = {}
+        colls = db.list_collection_names()
 
-        org_dir = os.path.join("statistical_data", org)
-        os.makedirs(org_dir, exist_ok=True)
+        for col in colls:
+            if col.startswith("files_"):
+                continue
 
-        for col_name in collections:
-            collection = db[col_name]
-            yday_query = {
+            query = {
                 "extracted_date": {
-                    "$gte": datetime.datetime.combine(yesterday, datetime.time.min, tzinfo=datetime.timezone.utc),
-                    "$lt": datetime.datetime.combine(yesterday + datetime.timedelta(days=1), datetime.time.min, tzinfo=datetime.timezone.utc)
+                    "$gte": datetime.datetime.combine(
+                        yesterday_date,
+                        datetime.time.min,
+                        tzinfo=datetime.timezone.utc
+                    ),
+                    "$lt": datetime.datetime.combine(
+                        yesterday_date + datetime.timedelta(days=1),
+                        datetime.time.min,
+                        tzinfo=datetime.timezone.utc
+                    )
                 }
             }
 
-            if collection.count_documents(yday_query, limit=1):
-                yday_collections.append(col_name)
-                attack_counter = defaultdict(lambda: defaultdict(int))
-                raw_count = collection.count_documents(yday_query)
-                valid_attack_count = 0
+            for doc in db[col].find(
+                query,
+                {"src_geo": 1, "dst_geo": 1, "http_referer_geo": 1}
+            ):
+                src = doc.get("src_geo") or doc.get("http_referer_geo")
+                dst = doc.get("dst_geo")
+                if src:
+                    required_codes.add(src.upper())
+                if dst:
+                    required_codes.add(dst.upper())
 
-                for doc in collection.find(yday_query, {"src_geo": 1, "dst_geo": 1, "src_ip": 1, "http_referer_ip": 1, "http_referer_geo": 1}):
-                    if doc.get("src_geo"):
-                        src_geo = doc["src_geo"].upper()
-                    elif doc.get("http_referer_geo"):
-                        src_geo = doc["http_referer_geo"].upper()
-                    else:
-                        src_geo = "ZZ"
+        # Skip organisation if no country codes found (means no data)
+        if not required_codes:
+            continue
 
-                    dst_geo = (doc.get("dst_geo") or "ZZ").upper()
+        # Select best shapefile for this org's country codes
+        shapefile_path, shapefile_type = select_best_shapefile(required_codes)
+        print(f"\nOrganisation: {org}, Database: {db_name}, selected shapefile: {shapefile_type}")
 
-                    if src_geo != "ZZ" and dst_geo != "ZZ" and src_geo != dst_geo:
-                        attack_counter[src_geo][dst_geo] += 1
-
-                #print(f"→ Raw DB Count: {raw_count}")
-                #print(f"→ Valid (Filtered) Attack Entries: {valid_attack_count}")
-
-                attacks = [(src, dst, count) for src, dsts in attack_counter.items() for dst, count in dsts.items()]
-                if not attacks:
-                    continue
-
-                maps_dir = os.path.join(org_dir, "generated_threatmaps")
-                os.makedirs(maps_dir, exist_ok=True)
-                map_path = os.path.join(
-                    maps_dir,
-                    f"{safe_filename(org)}_{today_str}_{safe_filename(col_name)}_map.png"
-                )
-                create_attack_map(attacks, map_path)
-
-                meta = desc_lookup.get(col_name, {})
-                collection_attacks[col_name] = {
-                    "attacks": attacks,
-                    "map": map_path,
-                    "title": meta.get("title", "Untitled Report"),
-                    "severity": meta.get("severity", "Unknown"),
-                    "description": meta.get("description", "No description available."),
-                    "reference": meta.get("reference", "N/A")
+        collection_attacks = {}
+        # Continue processing attacks and building reports/maps with shapefile_path...
+        for col in colls:
+            if col.startswith("files_"):
+                continue
+            query = {
+                "extracted_date": {
+                    "$gte": datetime.datetime.combine(yesterday_date, datetime.time.min, tzinfo=datetime.timezone.utc),
+                    "$lt": datetime.datetime.combine(yesterday_date + datetime.timedelta(days=1), datetime.time.min, tzinfo=datetime.timezone.utc)
                 }
+            }
+            if not db[col].count_documents(query):
+                continue
 
+            attack_counter = defaultdict(lambda: defaultdict(int))
+            for doc in db[col].find(query, {"src_geo": 1, "dst_geo": 1, "http_referer_geo": 1}):
+                src = (doc.get("src_geo") or doc.get("http_referer_geo") or "ZZ").upper()
+                dst = (doc.get("dst_geo") or "ZZ").upper()
+                if src != "ZZ" and dst != "ZZ" and src != dst:
+                    attack_counter[src][dst] += 1
+
+            attacks = [(src, dst, cnt) for src, dsts in attack_counter.items() for dst, cnt in dsts.items()]
+            if not attacks:
+                continue
+
+            org_dir = os.path.join("statistical_data", org, "generated_threatmaps")
+            os.makedirs(org_dir, exist_ok=True)
+            map_path = os.path.join(org_dir, f"{safe_filename(org)}_{today_str}_{safe_filename(col)}_map.png")
+            create_attack_map(attacks, map_path, shapefile_path)
+
+            meta = desc_lookup.get(col, {})
+            collection_attacks[col] = {
+                "attacks": attacks,
+                "map": map_path,
+                "title": meta.get("title", "Untitled"),
+                "severity": meta.get("severity", "Unknown"),
+                "description": meta.get("description", ""),
+            }
 
         if collection_attacks:
-            print(f"\n🔷 Organisation: {org}")
-            print(f"   ➤ Database: {db_name}")
-            print(f"   ➤ Collections with valid attack data: {list(collection_attacks.keys())}")
-
-            pdf_path = os.path.join(org_dir, f"{safe_filename(org)}_{today_str}_attack_report.pdf")
-            generate_pdf_report(org, db_name, collection_attacks, pdf_path, cert_name)
-            print(f"   ➤ PDF Report: {pdf_path}")
-
+            pdf = os.path.join("statistical_data", org, f"{safe_filename(org)}_{today_str}_attack_report.pdf")
+            generate_pdf_report(org, db_name, collection_attacks, pdf, cert_name)
+            print(f"Collections in report:")
+            for col, data in collection_attacks.items():
+                print(f" - {col}: Map image -> {data['map']}")
+            print(f"PDF generated: {pdf}")
+	    
         gc.collect()
 
+
 if __name__ == "__main__":
+    print("\nChecking required shapefiles...")
+    for shapefile_type in ["admin_0_countries_10m", "admin_0_countries_50m", "admin_0_countries_110m"]:
+        try:
+            path = get_shapefile_path(shapefile_type)
+            print(f"✔ Found shapefile for {shapefile_type}: {path}")
+        except Exception as e:
+            print(f"✖ Failed to retrieve shapefile for {shapefile_type}: {e}")
+
     main()
