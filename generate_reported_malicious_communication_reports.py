@@ -214,7 +214,7 @@ def generate_pdf_report(org, db, coll_atks, pdf_path, cert_name):
     styles = getSampleStyleSheet()
 
     # Header
-    story.append(Paragraph("Destination-Based Events Reported by Shadowserver", styles["Title"]))
+    story.append(Paragraph("Destination-Based Event(s) Reported by Shadowserver", styles["Title"]))
     story.append(Paragraph(f"Organization: <b>{org}</b>", styles["Heading2"]))
     story.append(Paragraph(f"<b>Generated on:</b> {today}", styles["Normal"]))
     story.append(Spacer(1, 12))
@@ -227,7 +227,7 @@ def generate_pdf_report(org, db, coll_atks, pdf_path, cert_name):
         story.append(Spacer(1, 8))
 
         for idx, (src, dst, count) in enumerate(sorted(data['attacks'], key=lambda x: x[2], reverse=True), 1):
-            story.append(Paragraph(f"{idx}. {get_country_name(src)} → {get_country_name(dst)}: {count} events", styles["Normal"]))
+            story.append(Paragraph(f"{idx}. Malicious communication reported between {get_country_name(src)} and {get_country_name(dst)}: {count} event(s)", styles["Normal"]))
         story.append(Spacer(1, 12))
         story.append(Image(data['map'], width=500, height=280))
         story.append(PageBreak())
