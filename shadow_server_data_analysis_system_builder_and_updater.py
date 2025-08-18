@@ -2116,7 +2116,7 @@ async def main_shadowserver_knowledgebase_ingestion(
                 file_successfully_ingested = False
 
             if file_successfully_ingested:
-                print(f"[Summary ({org_folder}  ā {category}) ] {filename} ā Inserted: {len(lines_to_hash)}")
+                print(f"[Summary ({org_folder}  ā {category}) ] {filename} ā Inserted Document(s): {len(lines_to_hash)}")
                 files_collection.update_one(
                     {"filename": filename, "category": category},
                     {"$set": {"ingested": True, "path": file_path}},
