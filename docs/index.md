@@ -11,22 +11,10 @@ layout: default
 
 ---
 
-## 📚 Table of Contents
+This toolkit is a dedication to my mentors Kwadwo Osafo-Maafo and Spilker Wiredu, my brother from another country Mark Kilizo from Kenya. 
+They made the impossible actually possible and gave me so much focus to bring this to reality. Also shoutout to DeepDarkCTI!!
 
-```{toctree}
-:maxdepth: 2
-:caption: Documentation
-
-System Requirements <02_system-requirements.md>
-Installation & Bootstrapping <03_installation-and-environment-bootstrapping.md>
-Environment Configuration <04_environment-configuration.md>
-Report Ingestion Flow <05_shadowserver-report-ingestion-usage-and-flow.md>
-Metadata Scraper <06_shadowserver-report-metadata-scraper.md>
-Org-Based Report Generator <07_organization‐based-shadowserver-report-generator.md>
-Analytics Dashboard <08_portable-analytics-dashboard.md>
-Some Interesting Findings <09_crazy_techy_mode.md>
-```
-
+---
 
 
 ## 📌 Overview
