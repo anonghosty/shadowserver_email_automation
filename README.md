@@ -65,6 +65,9 @@ Key features include:
 - Portable dashboard for quick visualisation in meetings,  for current threat landscape reports and decisions on advisory dissemination
 - Full support for MongoDB-backed enrichment
 - Chrome + Selenium automation for scraping report metadata
+- New Feature(Experimental) - GUI For Ingestion implementation
+
+![](docs/gui_propisition.png)
 
 ![](docs/legal-okay.gif)
 
