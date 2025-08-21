@@ -22,6 +22,7 @@ apt_packages = [
     "wget",
     "ca-certificates",
     "gnupg",
+    "python3-tk",
     "lsb-release",
 ]
 
@@ -41,6 +42,7 @@ if not requirements_path.exists():
     requirements = [
         # Already present in your previous list
         "aiofiles",
+        "customtkinter",
         "aiohttp",
         "async-lru",
         "beautifulsoup4",
@@ -154,4 +156,5 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
+
 
