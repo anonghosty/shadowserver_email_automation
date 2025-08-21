@@ -87,7 +87,7 @@ After the KeCIRT troubleshooting meeting another implementation is to be done wh
 Changes are currently being implemented and limits in Microsoft Graph downloads have also been identified. kindly stay tuned.
 - Limit Issue Resolved
 - No attachment issue resolved both IMAP and Microsoft Graph
-- Tracker clear implementation yet to be done
+- Tracker clear implementation done
 - Realised reported codes could expand to 6 characters accounted for that
 
 ![](docs/hehe.gif)
