@@ -11,6 +11,13 @@ layout: default
 
 ---
 
+# Here I Show Appreciation For My Development in Critical Thinking
+
+This toolkit is a dedication to my mentors Kwadwo Osafo-Maafo and Spilker Wiredu, my brother from another country Mark Kilizo from Kenya. 
+They made the impossible actually possible and gave me so much focus to bring this to reality. Also shoutout to DeepDarkCTI!!
+
+---
+
 ## 📌 Overview
 
 This project automates the ingestion, parsing, categorization, and reporting of threat intelligence feeds from [Shadowserver](https://www.shadowserver.org/). It is built for CSIRT teams and analysts looking to streamline Shadowserver report handling and transformation into actionable intelligence.
