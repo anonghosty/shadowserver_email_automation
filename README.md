@@ -7,7 +7,8 @@
 
 ---
 
-This toolkit is a dedication to my mentors Kwadwo Osafo-Maafo and Spilker Wiredu from Ghana, my brother from another country Mark Kilizo from Kenya. 
+## Here I Show Appreciation For My Development in Critical Thinking
+This toolkit is a dedication to my mentors Kwadwo Osafo-Maafo and Spilker Wiredu, my brother from another country Mark Kilizo from Kenya. 
 They made the impossible actually possible and gave me so much focus to bring this to reality. Also shoutout to DeepDarkCTI!!
 
 ---
