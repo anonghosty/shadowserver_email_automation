@@ -23,6 +23,10 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 author = "Ike Owuraku Amponsah"
 linkedin_url = "https://www.linkedin.com/in/iowuraku"
@@ -202,45 +206,111 @@ def create_attack_map(attack_data, output_path, shapefile_path):
 
 def get_severity_color(sev):
     s = sev.lower()
-    return colors.red if s in ['high', 'critical'] else colors.orange if s == 'medium' else colors.green if s == 'low' else colors.black
+    return (
+        colors.red if s in ['high', 'critical']
+        else colors.orange if s == 'medium'
+        else colors.green if s == 'low'
+        else colors.black
+    )
 
 def generate_pdf_report(org, db, coll_atks, pdf_path, cert_name):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     ref_num = f"{org[:3].upper()}-{today.replace('-', '')}"
+
     doc = SimpleDocTemplate(pdf_path, pagesize=A4)
     doc.title = f"{org} Shadowserver Report"
     doc.author = cert_name
+
     story = []
     styles = getSampleStyleSheet()
 
-    # Header
-    story.append(Paragraph("Destination-Based Event(s) Reported by Shadowserver", styles["Title"]))
+    # Report header content
+    story.append(Paragraph("Destination Based Events Reported by Shadowserver", styles["Title"]))
     story.append(Paragraph(f"Organization: <b>{org}</b>", styles["Heading2"]))
-    story.append(Paragraph(f"<b>Generated on:</b> {today}", styles["Normal"]))
+    story.append(Paragraph(
+        f'<b><font color="orange">TLP:AMBER</font></b> – confidential between the stakeholder (organization) and the {cert_name}',
+        styles["Normal"]))
     story.append(Spacer(1, 12))
 
     for col, data in coll_atks.items():
         story.append(Paragraph(f"<b>{data['title']} ({col})</b>", styles["Heading2"]))
+
         sev_color = get_severity_color(data.get("severity", "Unknown"))
-        story.append(Paragraph(f"<b>Severity:</b> {data.get('severity', 'Unknown')}", ParagraphStyle('sev', textColor=sev_color)))
+        story.append(Paragraph(
+            f"<b>Severity:</b> {data.get('severity', 'Unknown')}",
+            ParagraphStyle('sev', parent=styles["Normal"], textColor=sev_color)
+        ))
+
         story.append(Paragraph(f"<b>Description:</b> {data.get('description', '')}", styles["Normal"]))
         story.append(Spacer(1, 8))
 
         for idx, (src, dst, count) in enumerate(sorted(data['attacks'], key=lambda x: x[2], reverse=True), 1):
-            story.append(Paragraph(f"{idx}. Malicious communication reported between {get_country_name(src)} and {get_country_name(dst)}: {count} event(s)", styles["Normal"]))
+            story.append(Paragraph(
+                f"{idx}. Malicious communication reported between "
+                f"{get_country_name(src)} and {get_country_name(dst)}: "
+                f"{count} event(s)", styles["Normal"]
+            ))
+
         story.append(Spacer(1, 12))
         story.append(Image(data['map'], width=500, height=280))
         story.append(PageBreak())
 
-    def footer(canvas_obj, doc_obj):
+    def header_footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
         canvas_obj.setFont("Helvetica", 8)
-        msg = f"TLP:AMBER – Confidential | Reference: {ref_num}"
-        canvas_obj.drawString(0.7 * inch, 0.2 * inch, msg)
-        canvas_obj.drawRightString(11 * inch, 0.2 * inch, f"Page {doc_obj.page}")
+
+        x_left = 0.7 * inch
+        y_footer = 0.2 * inch
+
+        # Draw "TLP:"
+        canvas_obj.setFillColor(colors.black)
+        canvas_obj.drawString(x_left, y_footer, "TLP:")
+        x_left += canvas_obj.stringWidth("TLP:", "Helvetica", 8) + 2
+
+        # Draw "AMBER"
+        canvas_obj.setFont("Helvetica-Bold", 8)
+        canvas_obj.setFillColor(HexColor("#FFBF00"))
+        canvas_obj.drawString(x_left, y_footer, "AMBER")
+        x_left += canvas_obj.stringWidth("AMBER", "Helvetica-Bold", 8) + 2
+
+        # Draw "– Confidential"
+        canvas_obj.setFont("Helvetica-Bold", 8)
+        canvas_obj.setFillColor(colors.black)
+        confidential_text = f"– Confidential between the stakeholder (organization) and the {cert_name}"
+        canvas_obj.drawString(x_left, y_footer, confidential_text)
+        x_left += canvas_obj.stringWidth(confidential_text, "Helvetica-Bold", 8) + 2
+
+        # Draw reference number
+        canvas_obj.setFont("Helvetica", 8)
+        canvas_obj.drawString(x_left, y_footer, "| Reference: ")
+        x_left += canvas_obj.stringWidth("| Reference: ", "Helvetica", 8)
+
+        canvas_obj.setFont("Helvetica-Bold", 8)
+        canvas_obj.drawString(x_left, y_footer, ref_num)
+
+        # Page number (bottom-right)
+        canvas_obj.setFont("Helvetica", 8)
+        canvas_obj.drawRightString(11 * inch, y_footer, f"Page {doc_obj.page}")
+
+        # Top-right logo
+        logo_path = "logo.png"
+        if os.path.exists(logo_path):
+            logo = ImageReader(logo_path)
+            page_width, page_height = A4
+            canvas_obj.drawImage(
+                logo,
+                x=page_width - 1.5 * inch,
+                y=page_height - 1.2 * inch,
+                width=60,
+                height=60,
+                preserveAspectRatio=True,
+                mask='auto'
+            )
+
         canvas_obj.restoreState()
 
-    doc.build(story, onFirstPage=footer, onLaterPages=footer)
+    doc.build(story, onFirstPage=header_footer, onLaterPages=header_footer)
+
 
 def main():
     load_dotenv()
