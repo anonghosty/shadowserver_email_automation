@@ -555,7 +555,7 @@ class ModernCommandGUI:
     def check_output_queue(self):
         """Check for new output messages with batching"""
         messages_processed = 0
-        max_messages_per_update = 50  # Limit messages per GUI update
+        max_messages_per_update = 2000  # Limit messages per GUI update
         
         try:
             while messages_processed < max_messages_per_update:
@@ -585,7 +585,8 @@ class ModernCommandGUI:
             pass
             
         # Schedule next check with adaptive timing
-        delay = 50 if self.running_commands else 200  # Faster updates when commands are running
+        delay = 10 if self.running_commands else 50
+		
         self.root.after(delay, self.check_output_queue)
     
     def log_message_batch(self, message, msg_type="info"):
@@ -703,7 +704,7 @@ class ModernCommandGUI:
         
     def run(self):
         """Start the GUI application"""
-        self.log_message("🎉 Shadow Server Command Center initialized", "success")
+        self.log_message("🎉 Shadow Command Center initialized", "success")
         self.log_message("Click any command button to execute", "info")
         
         # Center window on screen
