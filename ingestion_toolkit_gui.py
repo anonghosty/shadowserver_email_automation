@@ -11,8 +11,11 @@ import time
 import signal
 import time
 import random
-        
 from collections import deque
+from customtkinter import CTkScrollbar
+
+
+
 
 # Set appearance mode and color theme
 ctk.set_appearance_mode("dark")
@@ -277,90 +280,107 @@ class ModernCommandGUI:
         # Configure grid weights for responsive design
         for i in range(3):
             button_container.grid_columnconfigure(i, weight=1)
-            
+    def on_mouse_wheel(self, event):
+        if event.delta != 0:
+            direction = "down" if event.delta < 0 else "up"
+            self.console_text.yview_scroll(-1 if direction == "down" else 1, "units")
+        return "break"
+
+    def on_scrollbar_drag(self, event):
+        # This ensures the scrollbar gets updated smoothly while dragging
+        self.console_text.yview_scroll(event.delta, "units")
+
+ 
+
+
+
     def create_console_section(self, parent):
-        """Create the console output section"""
-        console_frame = ctk.CTkFrame(parent, corner_radius=10)
-        console_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+            """Create the console output section"""
+            console_frame = ctk.CTkFrame(parent, corner_radius=10)
+            console_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        # Console header
-        console_header = ctk.CTkFrame(console_frame, height=40, corner_radius=8)
-        console_header.pack(fill="x", padx=10, pady=(10, 5))
-        console_header.pack_propagate(False)
+            # Console header
+            console_header = ctk.CTkFrame(console_frame, height=40, corner_radius=8)
+            console_header.pack(fill="x", padx=10, pady=(10, 5))
+            console_header.pack_propagate(False)
         
-        console_title = ctk.CTkLabel(
-            console_header,
-            text="💻 Console Output",
-            font=ctk.CTkFont(size=16, weight="bold")
-        )
-        console_title.pack(side="left", padx=15, pady=10)
+            console_title = ctk.CTkLabel(
+                console_header,
+                text="💻 Console Output",
+                font=ctk.CTkFont(size=16, weight="bold")
+            )
+            console_title.pack(side="left", padx=15, pady=10)
         
-        # Control buttons
-        button_frame = ctk.CTkFrame(console_header, fg_color="transparent")
-        button_frame.pack(side="right", padx=15, pady=7)
+            # Control buttons
+            button_frame = ctk.CTkFrame(console_header, fg_color="transparent")
+            button_frame.pack(side="right", padx=15, pady=7)
         
-        # Auto-scroll toggle
-        self.auto_scroll_var = tk.BooleanVar(value=True)
-        auto_scroll_check = ctk.CTkCheckBox(
-            button_frame,
-            text="Auto-scroll",
-            variable=self.auto_scroll_var,
-            width=80,
-            height=25,
-            font=ctk.CTkFont(size=12)
-        )
-        auto_scroll_check.pack(side="left", padx=5)
+            # Auto-scroll toggle
+            self.auto_scroll_var = tk.BooleanVar(value=True)
+            auto_scroll_check = ctk.CTkCheckBox(
+                button_frame,
+                text="Auto-scroll",
+                variable=self.auto_scroll_var,
+                width=80,
+                height=25,
+                font=ctk.CTkFont(size=12)
+            )
+            auto_scroll_check.pack(side="left", padx=5)
         
-        # Keyboard shortcut label
-        shortcut_label = ctk.CTkLabel(
-            button_frame,
-            text="⌃C to stop",
-            font=ctk.CTkFont(size=10),
-            text_color="#888888"
-        )
-        shortcut_label.pack(side="left", padx=5)
+            # Keyboard shortcut label
+            shortcut_label = ctk.CTkLabel(
+                button_frame,
+                text="⌃C to stop",
+                font=ctk.CTkFont(size=10),
+                text_color="#888888"
+            )
+            shortcut_label.pack(side="left", padx=5)
         
-        # Clear button
-        clear_btn = ctk.CTkButton(
-            button_frame,
-            text="🗑️ Clear",
-            width=80,
-            height=25,
-            font=ctk.CTkFont(size=12),
-            command=self.clear_console
-        )
-        clear_btn.pack(side="left", padx=5)
+            # Clear button
+            clear_btn = ctk.CTkButton(
+                button_frame,
+                text="🗑️ Clear",
+                width=80,
+                height=25,
+                font=ctk.CTkFont(size=12),
+                command=self.clear_console
+            )
+            clear_btn.pack(side="left", padx=5)
         
-        # Console text area with custom styling
-        console_container = ctk.CTkFrame(console_frame, fg_color="#1a1a1a")
-        console_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+            # Console text area with custom styling
+            console_container = ctk.CTkFrame(console_frame, fg_color="#1a1a1a")
+            console_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        self.console_text = tk.Text(
-            console_container,
-            bg="#0d1117",
-            fg="#c9d1d9",
-            font=("Consolas", 10),  # Slightly smaller font for performance
-            wrap=tk.WORD,
-            state=tk.DISABLED,
-            cursor="arrow",
-            selectbackground="#264f78",
-            selectforeground="#ffffff",
-            insertbackground="#c9d1d9"
-        )
+            self.console_text = tk.Text(
+                console_container,
+                bg="#0d1117",
+                fg="#c9d1d9",
+                font=("Consolas", 10),  # Slightly smaller font for performance
+                wrap=tk.WORD,
+                state=tk.DISABLED,
+                cursor="arrow",
+                selectbackground="#264f78",
+                selectforeground="#ffffff",
+                insertbackground="#c9d1d9"
+            )
         
-        # Scrollbar for console
-        scrollbar = tk.Scrollbar(console_container, command=self.console_text.yview)
-        self.console_text.config(yscrollcommand=scrollbar.set)
+            # Scrollbar for console - NOW console_container is defined
+            scrollbar = CTkScrollbar(console_container, command=self.console_text.yview)
+            self.console_text.config(yscrollcommand=scrollbar.set)
         
-        self.console_text.pack(side="left", fill="both", expand=True, padx=5, pady=5)
-        scrollbar.pack(side="right", fill="y", padx=(0, 5), pady=5)
+            # Bind mouse events - AFTER console_text is created
+            self.console_text.bind_all("<MouseWheel>", self.on_mouse_wheel)
+            self.console_text.bind("<B1-Motion>", self.on_scrollbar_drag)
         
-        # Configure text tags for colored output
-        self.console_text.tag_configure("info", foreground="#58a6ff")
-        self.console_text.tag_configure("success", foreground="#3fb950")
-        self.console_text.tag_configure("warning", foreground="#d29922")
-        self.console_text.tag_configure("error", foreground="#f85149")
-        self.console_text.tag_configure("timestamp", foreground="#8b949e")
+            self.console_text.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+            scrollbar.pack(side="right", fill="y", padx=(0, 5), pady=5)
+        
+            # Configure text tags for colored output
+            self.console_text.tag_configure("info", foreground="#58a6ff")
+            self.console_text.tag_configure("success", foreground="#3fb950")
+            self.console_text.tag_configure("warning", foreground="#d29922")
+            self.console_text.tag_configure("error", foreground="#f85149")
+            self.console_text.tag_configure("timestamp", foreground="#8b949e")
         
     def create_status_bar(self, parent):
         """Create the status bar"""
@@ -602,36 +622,41 @@ class ModernCommandGUI:
         """Flush batched messages to console"""
         if not self.console_buffer:
             return
-            
+
         self.console_text.config(state=tk.NORMAL)
-        
-        # Add all batched messages at once
+
+        # Collect all the batched messages into one string
+        output = ""
         for msg_data in self.console_buffer:
             timestamp = msg_data["timestamp"]
             message = msg_data["message"]
             msg_type = msg_data["type"]
-            
+
             # Add timestamp
-            self.console_text.insert(tk.END, f"[{timestamp}] ", "timestamp")
-            
+            output += f"[{timestamp}] "
+
             # Add message with appropriate color
             if msg_type == "success":
-                self.console_text.insert(tk.END, f"{message}\n", "success")
+                output += f"{message}\n"
             elif msg_type == "warning":
-                self.console_text.insert(tk.END, f"{message}\n", "warning")
+                output += f"{message}\n"
             elif msg_type == "error":
-                self.console_text.insert(tk.END, f"{message}\n", "error")
+                output += f"{message}\n"
             elif msg_type == "info":
-                self.console_text.insert(tk.END, f"{message}\n", "info")
+                output += f"{message}\n"
             else:
-                self.console_text.insert(tk.END, f"{message}\n")
-        
-        self.console_buffer.clear()
+                output += f"{message}\n"
+
+        self.console_text.insert(tk.END, output)  # Insert all at once
         self.console_text.config(state=tk.DISABLED)
-        
-        # Auto-scroll if enabled
+
+        # Auto-scroll if enabled, and smoothly update the scrollbar position
         if self.auto_scroll_var.get():
-            self.console_text.see(tk.END)
+            self.console_text.see(tk.END)  # This ensures auto-scroll is smooth
+
+        # Clear the buffer after flush
+        self.console_buffer.clear()
+
         
     def log_message(self, message, msg_type="info"):
         """Log a message to the console (single message)"""
