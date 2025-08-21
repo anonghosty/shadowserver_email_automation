@@ -26,13 +26,14 @@ class ModernCommandGUI:
         
         # Available commands
         self.commands = {
-            "email": {"color": "#FF6B6B", "icon": "📧", "desc": "Email operations"},
-            "migrate": {"color": "#4ECDC4", "icon": "🔄", "desc": "Database migration"},
-            "refresh": {"color": "#45B7D1", "icon": "🔄", "desc": "Refresh data"},
-            "process": {"color": "#96CEB4", "icon": "⚙️", "desc": "Process data"},
-            "country": {"color": "#FFEAA7", "icon": "🌍", "desc": "Country analysis"},
-            "service": {"color": "#DDA0DD", "icon": "🛠️", "desc": "Service management"},
-            "ingest": {"color": "#FFB347", "icon": "📥", "desc": "Data ingestion"}
+            "email": {"color": "#FF6B6B", "icon": "📧", "desc": "Pull Emails Or Reports From API"},
+            "migrate": {"color": "#4ECDC4", "icon": "🔄", "desc": "Unzip and Move Downloaded Files"},
+            "refresh": {"color": "#45B7D1", "icon": "🔄", "desc": "Refresh ASN Metadata"},
+            "process": {"color": "#96CEB4", "icon": "⚙️", "desc": "Process Data By Cached ASN Data or Automaticaly Retrieve ASN Data"},
+            "country": {"color": "#FFEAA7", "icon": "🌍", "desc": "Sort Processed Data By Country"},
+            "service": {"color": "#DDA0DD", "icon": "🛠️", "desc": "Create Service Folders and Sort Per Organisation"},
+            "ingest": {"color": "#FFB347", "icon": "📥", "desc": "Ingest Into Knowledgebase"},
+			"all": {"color": "#FFB347", "icon": "!!", "desc": "Run All Processes Related to Building the Knowledgebase"}
         }
         
         self.running_commands = set()
