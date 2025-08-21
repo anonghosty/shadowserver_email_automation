@@ -1,0 +1,423 @@
+import tkinter as tk
+from tkinter import ttk, scrolledtext
+import customtkinter as ctk
+import subprocess
+import threading
+import queue
+import os
+import sys
+from datetime import datetime
+import json
+
+# Set appearance mode and color theme
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
+
+class ModernCommandGUI:
+    def __init__(self):
+        self.root = ctk.CTk()
+        self.root.title("Shadow Command Center")
+        self.root.geometry("1200x800")
+        self.root.minsize(1000, 600)
+        
+        # Command queue for thread communication
+        self.command_queue = queue.Queue()
+        self.output_queue = queue.Queue()
+        
+        # Available commands
+        self.commands = {
+            "email": {"color": "#FF6B6B", "icon": "📧", "desc": "Email operations"},
+            "migrate": {"color": "#4ECDC4", "icon": "🔄", "desc": "Database migration"},
+            "refresh": {"color": "#45B7D1", "icon": "🔄", "desc": "Refresh data"},
+            "process": {"color": "#96CEB4", "icon": "⚙️", "desc": "Process data"},
+            "country": {"color": "#FFEAA7", "icon": "🌍", "desc": "Country analysis"},
+            "service": {"color": "#DDA0DD", "icon": "🛠️", "desc": "Service management"},
+            "ingest": {"color": "#FFB347", "icon": "📥", "desc": "Data ingestion"}
+        }
+        
+        self.running_commands = set()
+        self.command_history = []
+        
+        self.setup_ui()
+        self.setup_animations()
+        self.start_output_monitor()
+        
+    def setup_ui(self):
+        """Setup the main UI components"""
+        # Main container with padding
+        main_frame = ctk.CTkFrame(self.root, corner_radius=15)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Header
+        self.create_header(main_frame)
+        
+        # Command buttons section
+        self.create_command_section(main_frame)
+        
+        # Console section
+        self.create_console_section(main_frame)
+        
+        # Status bar
+        self.create_status_bar(main_frame)
+        
+    def create_header(self, parent):
+        """Create the header section"""
+        header_frame = ctk.CTkFrame(parent, height=80, corner_radius=10)
+        header_frame.pack(fill="x", padx=10, pady=(10, 20))
+        header_frame.pack_propagate(False)
+        
+        # Title with gradient effect simulation
+        title_label = ctk.CTkLabel(
+            header_frame, 
+            text="🚀 Shadow Server Command Center",
+            font=ctk.CTkFont(size=28, weight="bold"),
+            text_color="#00D4FF"
+        )
+        title_label.pack(side="left", padx=20, pady=20)
+        
+        # Status indicator
+        self.status_indicator = ctk.CTkLabel(
+            header_frame,
+            text="● Ready",
+            font=ctk.CTkFont(size=16),
+            text_color="#00FF88"
+        )
+        self.status_indicator.pack(side="right", padx=20, pady=20)
+        
+    def create_command_section(self, parent):
+        """Create the command buttons section"""
+        cmd_frame = ctk.CTkFrame(parent, corner_radius=10)
+        cmd_frame.pack(fill="x", padx=10, pady=(0, 20))
+        
+        # Section title
+        cmd_title = ctk.CTkLabel(
+            cmd_frame,
+            text="🎛️ Command Panel",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color="#FFFFFF"
+        )
+        cmd_title.pack(pady=(15, 10))
+        
+        # Button container with grid layout
+        button_container = ctk.CTkFrame(cmd_frame, fg_color="transparent")
+        button_container.pack(fill="x", padx=20, pady=(0, 15))
+        
+        self.command_buttons = {}
+        
+        # Create buttons in a grid (3 columns)
+        for i, (cmd, info) in enumerate(self.commands.items()):
+            row = i // 3
+            col = i % 3
+            
+            btn_frame = ctk.CTkFrame(button_container, corner_radius=8)
+            btn_frame.grid(row=row, column=col, padx=10, pady=10, sticky="ew")
+            
+            # Command button with hover effects
+            btn = ctk.CTkButton(
+                btn_frame,
+                text=f"{info['icon']} {cmd.upper()}",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                height=50,
+                corner_radius=8,
+                hover_color=info['color'],
+                command=lambda c=cmd: self.execute_command(c)
+            )
+            btn.pack(fill="x", padx=5, pady=5)
+            
+            # Description label
+            desc_label = ctk.CTkLabel(
+                btn_frame,
+                text=info['desc'],
+                font=ctk.CTkFont(size=10),
+                text_color="#888888"
+            )
+            desc_label.pack(pady=(0, 5))
+            
+            self.command_buttons[cmd] = btn
+            
+        # Configure grid weights for responsive design
+        for i in range(3):
+            button_container.grid_columnconfigure(i, weight=1)
+            
+    def create_console_section(self, parent):
+        """Create the console output section"""
+        console_frame = ctk.CTkFrame(parent, corner_radius=10)
+        console_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        # Console header
+        console_header = ctk.CTkFrame(console_frame, height=40, corner_radius=8)
+        console_header.pack(fill="x", padx=10, pady=(10, 5))
+        console_header.pack_propagate(False)
+        
+        console_title = ctk.CTkLabel(
+            console_header,
+            text="💻 Console Output",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        console_title.pack(side="left", padx=15, pady=10)
+        
+        # Clear button
+        clear_btn = ctk.CTkButton(
+            console_header,
+            text="🗑️ Clear",
+            width=80,
+            height=25,
+            font=ctk.CTkFont(size=12),
+            command=self.clear_console
+        )
+        clear_btn.pack(side="right", padx=15, pady=7)
+        
+        # Console text area with custom styling
+        console_container = ctk.CTkFrame(console_frame, fg_color="#1a1a1a")
+        console_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        self.console_text = tk.Text(
+            console_container,
+            bg="#0d1117",
+            fg="#c9d1d9",
+            font=("Consolas", 11),
+            wrap=tk.WORD,
+            state=tk.DISABLED,
+            cursor="arrow",
+            selectbackground="#264f78",
+            selectforeground="#ffffff",
+            insertbackground="#c9d1d9"
+        )
+        
+        # Scrollbar for console
+        scrollbar = tk.Scrollbar(console_container, command=self.console_text.yview)
+        self.console_text.config(yscrollcommand=scrollbar.set)
+        
+        self.console_text.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        scrollbar.pack(side="right", fill="y", padx=(0, 5), pady=5)
+        
+        # Configure text tags for colored output
+        self.console_text.tag_configure("info", foreground="#58a6ff")
+        self.console_text.tag_configure("success", foreground="#3fb950")
+        self.console_text.tag_configure("warning", foreground="#d29922")
+        self.console_text.tag_configure("error", foreground="#f85149")
+        self.console_text.tag_configure("timestamp", foreground="#8b949e")
+        
+    def create_status_bar(self, parent):
+        """Create the status bar"""
+        status_frame = ctk.CTkFrame(parent, height=35, corner_radius=8)
+        status_frame.pack(fill="x", padx=10, pady=(0, 10))
+        status_frame.pack_propagate(False)
+        
+        self.status_label = ctk.CTkLabel(
+            status_frame,
+            text="Ready to execute commands",
+            font=ctk.CTkFont(size=12)
+        )
+        self.status_label.pack(side="left", padx=15, pady=8)
+        
+        # Running commands counter
+        self.running_count_label = ctk.CTkLabel(
+            status_frame,
+            text="Running: 0",
+            font=ctk.CTkFont(size=12),
+            text_color="#888888"
+        )
+        self.running_count_label.pack(side="right", padx=15, pady=8)
+        
+    def setup_animations(self):
+        """Setup animation effects"""
+        self.animation_states = {}
+        
+    def animate_button(self, button, state="active"):
+        """Animate button with pulsing effect"""
+        if state == "active":
+            # Pulsing animation for active commands
+            def pulse():
+                if button.winfo_exists():
+                    current_color = button.cget("fg_color")
+                    if isinstance(current_color, str):
+                        # Toggle between normal and bright
+                        if current_color == "#1f538d":
+                            button.configure(fg_color="#2d7dd2")
+                        else:
+                            button.configure(fg_color="#1f538d")
+                    
+                    if button in [btn for btn in self.command_buttons.values() if btn.cget("text").split()[1].lower() in self.running_commands]:
+                        self.root.after(500, pulse)
+                        
+            pulse()
+            
+    def execute_command(self, command):
+        """Execute a command in a separate thread"""
+        if command in self.running_commands:
+            self.log_message(f"Command '{command}' is already running!", "warning")
+            return
+            
+        self.running_commands.add(command)
+        self.update_status_indicator()
+        self.animate_button(self.command_buttons[command], "active")
+        
+        # Start command in thread
+        thread = threading.Thread(target=self._run_command, args=(command,), daemon=True)
+        thread.start()
+        
+    def _run_command(self, command):
+        """Run command in subprocess"""
+        try:
+            self.log_message(f"🚀 Starting command: {command}", "info")
+            
+            # Check if the original file exists
+            script_path = "shadow_server_data_analysis_system_builder_and_updater.py"
+            if not os.path.exists(script_path):
+                # Create a mock script for demonstration
+                self.log_message(f"⚠️ Original script not found. Running simulation for '{command}'...", "warning")
+                self._simulate_command(command)
+            else:
+                # Run the actual command
+                cmd = [sys.executable, script_path, command]
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1
+                )
+                
+                # Read output line by line
+                for line in process.stdout:
+                    self.output_queue.put(("output", line.strip()))
+                    
+                process.wait()
+                return_code = process.returncode
+                
+                if return_code == 0:
+                    self.output_queue.put(("success", f"✅ Command '{command}' completed successfully"))
+                else:
+                    self.output_queue.put(("error", f"❌ Command '{command}' failed with code {return_code}"))
+                    
+        except Exception as e:
+            self.output_queue.put(("error", f"❌ Error executing '{command}': {str(e)}"))
+        finally:
+            self.output_queue.put(("finish", command))
+            
+    def _simulate_command(self, command):
+        """Simulate command execution for demonstration"""
+        import time
+        import random
+        
+        messages = [
+            f"Initializing {command} module...",
+            f"Loading configuration for {command}...",
+            f"Connecting to database...",
+            f"Processing {command} request...",
+            f"Validating {command} parameters...",
+            f"Executing {command} operations...",
+            f"Finalizing {command} results..."
+        ]
+        
+        for i, msg in enumerate(messages):
+            time.sleep(random.uniform(0.5, 1.5))
+            self.output_queue.put(("output", f"[{command.upper()}] {msg}"))
+            
+        # Simulate success/failure
+        if random.random() > 0.2:  # 80% success rate
+            self.output_queue.put(("success", f"✅ Command '{command}' simulation completed successfully"))
+        else:
+            self.output_queue.put(("error", f"❌ Command '{command}' simulation failed"))
+            
+    def start_output_monitor(self):
+        """Start monitoring output queue"""
+        self.check_output_queue()
+        
+    def check_output_queue(self):
+        """Check for new output messages"""
+        try:
+            while True:
+                msg_type, content = self.output_queue.get_nowait()
+                
+                if msg_type == "finish":
+                    self.running_commands.discard(content)
+                    self.update_status_indicator()
+                    self.command_buttons[content].configure(fg_color=["#3B8ED0", "#1F538D"])
+                elif msg_type in ["output", "info", "success", "warning", "error"]:
+                    self.log_message(content, msg_type)
+                    
+        except queue.Empty:
+            pass
+            
+        # Schedule next check
+        self.root.after(100, self.check_output_queue)
+        
+    def log_message(self, message, msg_type="info"):
+        """Log a message to the console"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        self.console_text.config(state=tk.NORMAL)
+        
+        # Add timestamp
+        self.console_text.insert(tk.END, f"[{timestamp}] ", "timestamp")
+        
+        # Add message with appropriate color
+        if msg_type == "success":
+            self.console_text.insert(tk.END, f"{message}\n", "success")
+        elif msg_type == "warning":
+            self.console_text.insert(tk.END, f"{message}\n", "warning")
+        elif msg_type == "error":
+            self.console_text.insert(tk.END, f"{message}\n", "error")
+        elif msg_type == "info":
+            self.console_text.insert(tk.END, f"{message}\n", "info")
+        else:
+            self.console_text.insert(tk.END, f"{message}\n")
+            
+        self.console_text.config(state=tk.DISABLED)
+        self.console_text.see(tk.END)
+        
+        # Update command history
+        self.command_history.append({
+            "timestamp": timestamp,
+            "message": message,
+            "type": msg_type
+        })
+        
+    def clear_console(self):
+        """Clear the console output"""
+        self.console_text.config(state=tk.NORMAL)
+        self.console_text.delete(1.0, tk.END)
+        self.console_text.config(state=tk.DISABLED)
+        self.log_message("Console cleared", "info")
+        
+    def update_status_indicator(self):
+        """Update the status indicator"""
+        running_count = len(self.running_commands)
+        
+        if running_count == 0:
+            self.status_indicator.configure(text="● Ready", text_color="#00FF88")
+            self.status_label.configure(text="Ready to execute commands")
+        else:
+            self.status_indicator.configure(text="● Running", text_color="#FFD700")
+            self.status_label.configure(text=f"Executing {running_count} command(s)...")
+            
+        self.running_count_label.configure(text=f"Running: {running_count}")
+        
+    def run(self):
+        """Start the GUI application"""
+        self.log_message("🎉 Shadow Server Command Center initialized", "success")
+        self.log_message("Click any command button to execute", "info")
+        
+        # Center window on screen
+        self.root.update_idletasks()
+        x = (self.root.winfo_screenwidth() // 2) - (self.root.winfo_width() // 2)
+        y = (self.root.winfo_screenheight() // 2) - (self.root.winfo_height() // 2)
+        self.root.geometry(f"+{x}+{y}")
+        
+        self.root.mainloop()
+
+def main():
+    """Main entry point"""
+    try:
+        app = ModernCommandGUI()
+        app.run()
+    except KeyboardInterrupt:
+        print("\nApplication terminated by user.")
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
