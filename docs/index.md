@@ -12,6 +12,7 @@ layout: default
 ---
 
 ## 📚 Table of Contents
+
 ```{toctree}
 :maxdepth: 2
 :caption: Documentation
@@ -24,7 +25,7 @@ Metadata Scraper <06_shadowserver-report-metadata-scraper.md>
 Org-Based Report Generator <07_organization‐based-shadowserver-report-generator.md>
 Analytics Dashboard <08_portable-analytics-dashboard.md>
 Some Interesting Findings <09_crazy_techy_mode.md>
-
+```
 
 
 
