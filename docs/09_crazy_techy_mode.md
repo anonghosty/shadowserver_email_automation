@@ -1,0 +1,40 @@
+---
+title: 09 A Good Read
+---
+
+# Something Awesome To Try Out
+
+## Testing with XFS on Ubuntu Desktop Deployment
+
+For this deployment, XFS was tested as the primary filesystem on an Ubuntu desktop environment. The objective was to evaluate its performance for local development tasks involving the latest MongoDB version and large data operations.
+
+### 1. High Throughput for Large Files
+XFS is optimized for high-performance I/O, especially for large files and sequential reads/writes.
+
+With MongoDB 8.x, which introduces improved performance tuning and analytical features, the efficient handling of large extents in XFS becomes even more beneficial.
+
+### 2. Better Parallel I/O
+XFS supports scalable multithreaded I/O, allowing multiple concurrent operations without bottlenecks — ideal for multi-core desktop systems running MongoDB queries, data imports, or testing replica sets.
+
+### 3. Fast Allocation with Extents
+XFS uses extent-based allocation instead of block-by-block, which minimizes fragmentation and improves access time — especially useful for large collections or workloads that involve frequent updates and insertions.
+
+### 4. Metadata Performance
+MongoDB 8.x can generate heavy metadata activity (e.g., index builds, schema changes, and internal diagnostic writes). XFS’s delayed allocation and advanced journaling make it more efficient at handling this than ext4.
+
+### 5. Recommended by MongoDB Inc.
+MongoDB officially recommends using XFS in production environments, particularly with the WiredTiger storage engine (still the default in MongoDB 8.x).
+
+XFS is the standard filesystem for MongoDB in cloud-managed environments such as MongoDB Atlas and Ops Manager, where performance and reliability are critical.
+
+---
+
+### 🆚 XFS vs ext4 for MongoDB 8.x
+
+| Feature           | XFS                            | ext4                          |
+|-------------------|--------------------------------|-------------------------------|
+| File Size         | Very large (up to 8 exabytes)  | Large, but smaller max size   |
+| Performance       | Better for big/parallel I/O    | Good general performance      |
+| Journal System    | Advanced metadata journaling   | Simpler journaling            |
+| MongoDB Support   | Officially recommended         | Supported, but not preferred  |
+| Maturity          | Very mature (IRIX, Linux)      | Very mature and widespread    |
