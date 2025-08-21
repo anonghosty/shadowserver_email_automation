@@ -69,7 +69,7 @@ class ModernCommandGUI:
         # Title with gradient effect simulation
         title_label = ctk.CTkLabel(
             header_frame, 
-            text="🚀 Shadow Server Command Center",
+            text="Shadow Command Center",
             font=ctk.CTkFont(size=28, weight="bold"),
             text_color="#00D4FF"
         )
