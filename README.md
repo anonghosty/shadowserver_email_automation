@@ -7,6 +7,11 @@
 
 ---
 
+This toolkit is a dedication to my mentors Kwadwo Osafo-Maafo and Spilker Wiredu, my brother from another country Mark Kilizo from Kenya. 
+They made the impossible actually possible and gave me so much focus to bring this to reality. Also shoutout to DeepDarkCTI!!
+
+---
+
 ## License
 
 MIT License (Modified - No Resale)
@@ -389,6 +394,7 @@ Outputs:
 - ASN-category maps, IP prefixes, summary counts
 
 ---
+
 
 
 
