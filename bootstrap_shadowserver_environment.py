@@ -60,6 +60,7 @@ if not requirements_path.exists():
         "python-dotenv",
         "geopandas",
         "pycountry",
+        "psutil",
         "matplotlib",
     ]
     subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages"] + requirements, check=True)
@@ -156,5 +157,6 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
+
 
 
