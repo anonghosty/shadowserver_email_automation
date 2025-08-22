@@ -461,11 +461,18 @@ class ModernCommandGUI:
             self.archive_dropdown_menu.destroy()
             self.archive_dropdown_menu = None
 
-        self.archive_dropdown_btn.configure(
-            text="š Archive Folders ā¼",
-            fg_color="#3B4252"
-        )
-        self.dropdown_visible = False  # Archive dropdown flag
+        if self.archive_dropdown_btn:
+            self.archive_dropdown_btn.configure(
+                text="š Archive Folders ā¼",
+                fg_color="#3B4252"
+            )
+
+        self.dropdown_visible = False
+
+        # Unbind click outside handler if no dropdowns are visible
+        if not self.mapping_dropdown_visible:
+            self.root.unbind("<Button-1>")
+
 
     def hide_mapping_dropdown(self):
         """Hide mapping files dropdown menu"""
@@ -473,26 +480,37 @@ class ModernCommandGUI:
             self.mapping_dropdown_menu.destroy()
             self.mapping_dropdown_menu = None
 
-        self.mapping_dropdown_btn.configure(
-            text="š Mapping Files ā¼",
-            fg_color="#5D4E75"
-        )
-    
-        self.mapping_dropdown_visible = False  # Mapping dropdown flag
-	
+        if self.mapping_dropdown_btn:
+            self.mapping_dropdown_btn.configure(
+                text="š Mapping Files ā¼",
+                fg_color="#5D4E75"
+            )
+
+        self.mapping_dropdown_visible = False
+
+        # Unbind click outside handler if no dropdowns are visible
+        if not self.dropdown_visible:
+            self.root.unbind("<Button-1>")
+
+
     def toggle_archive_dropdown(self):
-        """Toggle the archive folders dropdown menu"""
         if self.dropdown_visible:
             self.hide_dropdown()
         else:
+            if self.mapping_dropdown_visible:
+                self.hide_mapping_dropdown()
             self.show_dropdown()
-			
+
+
     def toggle_mapping_dropdown(self):
         if self.mapping_dropdown_visible:
             self.hide_mapping_dropdown()
         else:
+            if self.dropdown_visible:
+                self.hide_dropdown()
             self.show_mapping_dropdown()
-		
+
+
     def create_mapping_dropdown(self, parent):
         """Create the Mapping Files dropdown menu"""
         dropdown_frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -521,29 +539,32 @@ class ModernCommandGUI:
             
     def show_mapping_dropdown(self):
         """Show the mapping files dropdown menu"""
+        # Close archive dropdown if open
+        if self.dropdown_visible:
+            self.hide_dropdown()
+
         if self.mapping_dropdown_menu:
-            self.hide_mapping_dropdown()
-            
-        # Create dropdown menu
+            # Already open, do nothing
+            return
+
+        # Create dropdown menu position
         dropdown_x = self.mapping_dropdown_btn.winfo_rootx()
         dropdown_y = self.mapping_dropdown_btn.winfo_rooty() + self.mapping_dropdown_btn.winfo_height() + 5
-        
+
         self.mapping_dropdown_menu = ctk.CTkToplevel(self.root)
         self.mapping_dropdown_menu.withdraw()  # Hide initially
         self.mapping_dropdown_menu.overrideredirect(True)
         self.mapping_dropdown_menu.configure(fg_color=("#2B2B2B", "#1a1a1a"))
-        
-        # Calculate menu width and height
+
         menu_width = 350
         menu_height = len(self.mapping_files) * 70 + 60
-        
         self.mapping_dropdown_menu.geometry(f"{menu_width}x{menu_height}+{dropdown_x}+{dropdown_y}")
-        
+
         # Menu header
         header_frame = ctk.CTkFrame(self.mapping_dropdown_menu, height=40, corner_radius=0, fg_color="#5D4E75")
         header_frame.pack(fill="x", padx=0, pady=0)
         header_frame.pack_propagate(False)
-        
+
         header_label = ctk.CTkLabel(
             header_frame,
             text="š Mapping Files",
@@ -551,26 +572,27 @@ class ModernCommandGUI:
             text_color="#ECEFF4"
         )
         header_label.pack(pady=10)
-        
+
         # File items
         for file_key, file_info in self.mapping_files.items():
             self.create_mapping_dropdown_item(self.mapping_dropdown_menu, file_key, file_info)
-            
+
         # Show menu with fade-in effect
         self.mapping_dropdown_menu.deiconify()
         self.mapping_dropdown_menu.attributes('-alpha', 0.0)
         self.fade_in_mapping_menu()
-        
+
         # Update button appearance
         self.mapping_dropdown_btn.configure(
             text="š Mapping Files ā²",
             fg_color="#6A5688"
         )
-        
+
         self.mapping_dropdown_visible = True
-        
-        # Bind click outside to close
-        self.root.bind("<Button-1>", self.on_click_outside_mapping_dropdown)
+
+        # Bind click outside to close dropdown
+        self.root.bind("<Button-1>", self.on_click_outside_dropdown)
+		
         
     def create_mapping_dropdown_item(self, parent, file_key, file_info):
         """Create a dropdown menu item for a mapping file"""
@@ -599,7 +621,7 @@ class ModernCommandGUI:
             text=f"{status_icon} {file_info['icon']} {file_info['display_name']}",
             font=ctk.CTkFont(size=12, weight="bold"),
             anchor="w",
-            text_color="#2E3440" if file_exists else "#BF616A"
+            text_color="#5E81AC" if file_exists else "#BF616A"
         )
         name_label.pack(fill="x")
         
@@ -778,7 +800,7 @@ class ModernCommandGUI:
 
         inst_label = ctk.CTkLabel(
             inst_frame,
-            text="⚙ Enter environment variables as key-value pairs",
+            text="? Enter environment variables as key-value pairs",
             font=ctk.CTkFont(size=12),
             text_color="#ECEFF4"
         )
@@ -883,7 +905,7 @@ class ModernCommandGUI:
 
         inst_label = ctk.CTkLabel(
             inst_frame,
-            text="🗒 Edit CSV data in grid - rows and columns editable",
+            text="? Edit CSV data in grid - rows and columns editable",
             font=ctk.CTkFont(size=12),
             text_color="#ECEFF4"
         )
@@ -1120,30 +1142,29 @@ class ModernCommandGUI:
         # Close mapping dropdown if open
         if self.mapping_dropdown_visible:
             self.hide_mapping_dropdown()
-            
+
         if self.archive_dropdown_menu:
-            self.hide_dropdown()
-            
-        # Create dropdown menu
+            # Already open, do nothing
+            return
+
+        # Create dropdown menu position
         dropdown_x = self.archive_dropdown_btn.winfo_rootx()
         dropdown_y = self.archive_dropdown_btn.winfo_rooty() + self.archive_dropdown_btn.winfo_height() + 5
-        
+
         self.archive_dropdown_menu = ctk.CTkToplevel(self.root)
         self.archive_dropdown_menu.withdraw()  # Hide initially
         self.archive_dropdown_menu.overrideredirect(True)
         self.archive_dropdown_menu.configure(fg_color=("#2B2B2B", "#1a1a1a"))
-        
-        # Calculate menu width
+
         menu_width = 320
         menu_height = len(self.archive_folders) * 70 + 80
-        
         self.archive_dropdown_menu.geometry(f"{menu_width}x{menu_height}+{dropdown_x}+{dropdown_y}")
-        
+
         # Menu header
         header_frame = ctk.CTkFrame(self.archive_dropdown_menu, height=40, corner_radius=0, fg_color="#3B4252")
         header_frame.pack(fill="x", padx=0, pady=0)
         header_frame.pack_propagate(False)
-        
+
         header_label = ctk.CTkLabel(
             header_frame,
             text="š Archive Folders",
@@ -1151,29 +1172,33 @@ class ModernCommandGUI:
             text_color="#ECEFF4"
         )
         header_label.pack(pady=10)
-        
+
         # Folder items
         for folder_name, folder_info in self.archive_folders.items():
             self.create_dropdown_item(self.archive_dropdown_menu, folder_name, folder_info)
-            
+
         # Add "Run All" option at the bottom
         self.create_run_all_item(self.archive_dropdown_menu)
-        
+
         # Show menu with fade-in effect
         self.archive_dropdown_menu.deiconify()
         self.archive_dropdown_menu.attributes('-alpha', 0.0)
         self.fade_in_menu()
-        
+
         # Update button appearance
         self.archive_dropdown_btn.configure(
             text="š Archive Folders ā²",
             fg_color="#434C5E"
         )
-        
+
         self.dropdown_visible = True
-        
-        # Bind click outside to close
+
+        # Bind click outside to close dropdown
         self.root.bind("<Button-1>", self.on_click_outside_dropdown)
+
+		
+		
+		
         
     def create_dropdown_item(self, parent, folder_name, folder_info):
         """Create a dropdown menu item for a folder"""
@@ -1202,7 +1227,7 @@ class ModernCommandGUI:
             text=f"{status_icon} {folder_name}",
             font=ctk.CTkFont(size=12, weight="bold"),
             anchor="w",
-            text_color="#2E3440" if folder_exists else "#BF616A"
+            text_color="#5E81AC" if folder_exists else "#BF616A"
         )
         name_label.pack(fill="x")
         
@@ -1297,23 +1322,23 @@ class ModernCommandGUI:
         self.root.unbind("<Button-1>")
         
     def on_click_outside_dropdown(self, event):
-        """Handle clicking outside dropdown to close it"""
-        if self.archive_dropdown_menu and event.widget not in [self.archive_dropdown_menu, self.archive_dropdown_btn]:
-            # Check if click was inside dropdown
-            try:
-                dropdown_x = self.archive_dropdown_menu.winfo_rootx()
-                dropdown_y = self.archive_dropdown_menu.winfo_rooty()
-                dropdown_width = self.archive_dropdown_menu.winfo_width()
-                dropdown_height = self.archive_dropdown_menu.winfo_height()
-                
-                click_x = event.x_root
-                click_y = event.y_root
-                
-                if not (dropdown_x <= click_x <= dropdown_x + dropdown_width and 
-                       dropdown_y <= click_y <= dropdown_y + dropdown_height):
-                    self.hide_dropdown()
-            except:
+        # Check if click was outside archive dropdown menu
+        if self.archive_dropdown_menu:
+            x1 = self.archive_dropdown_menu.winfo_rootx()
+            y1 = self.archive_dropdown_menu.winfo_rooty()
+            x2 = x1 + self.archive_dropdown_menu.winfo_width()
+            y2 = y1 + self.archive_dropdown_menu.winfo_height()
+            if not (x1 <= event.x_root <= x2 and y1 <= event.y_root <= y2):
                 self.hide_dropdown()
+
+        # Check if click was outside mapping dropdown menu
+        if self.mapping_dropdown_menu:
+            x1 = self.mapping_dropdown_menu.winfo_rootx()
+            y1 = self.mapping_dropdown_menu.winfo_rooty()
+            x2 = x1 + self.mapping_dropdown_menu.winfo_width()
+            y2 = y1 + self.mapping_dropdown_menu.winfo_height()
+            if not (x1 <= event.x_root <= x2 and y1 <= event.y_root <= y2):
+                self.hide_mapping_dropdown()
                 
         # Also check mapping dropdown
         if self.mapping_dropdown_menu and event.widget not in [self.mapping_dropdown_menu, self.mapping_dropdown_btn]:
