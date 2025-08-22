@@ -14,6 +14,8 @@ import random
 from collections import deque
 from customtkinter import CTkScrollbar
 from resource_monitor import ResourceMonitorApp
+import io
+import csv
 
 # Set appearance mode and color theme
 ctk.set_appearance_mode("dark")
@@ -160,14 +162,14 @@ class ModernCommandGUI:
                 "display_name": "Environmental Variables",
                 "description": "Environment configuration settings",
                 "type": "env",
-                "icon": "🔧"
+                "icon": "š§"
             },
             "constituent_map": {
                 "path": "shadowserver_analysis_system/detected_companies/constituent_map.csv",
                 "display_name": "Constituent Map",
                 "description": "Company constituent mapping configuration",
                 "type": "csv",
-                "icon": "📊"
+                "icon": "š"
             }
         }
         
@@ -176,14 +178,14 @@ class ModernCommandGUI:
         
         # Available commands
         self.commands = {
-            "email": {"color": "#FF6B6B", "icon": "📧", "desc": "Pull Emails Or Reports From API"},
-            "migrate": {"color": "#4ECDC4", "icon": "🔄", "desc": "Unzip and Move Downloaded Files"},
-            "refresh": {"color": "#45B7D1", "icon": "🔄", "desc": "Refresh ASN Metadata"},
-            "process": {"color": "#96CEB4", "icon": "⚙️", "desc": "Process Data By Cached ASN Data or Automaticaly Retrieve ASN Data"},
-            "country": {"color": "#FFEAA7", "icon": "🌍", "desc": "Sort Processed Data By Country"},
-            "service": {"color": "#DDA0DD", "icon": "🛠️", "desc": "Create Service Folders and Sort Per Organisation"},
-            "ingest": {"color": "#FFB347", "icon": "📥", "desc": "Ingest Into Knowledgebase"},
-            "all": {"color": "#FFB347", "icon": "⚡", "desc": "Run All Processes Related to Building the Knowledgebase"}
+            "email": {"color": "#FF6B6B", "icon": "š§", "desc": "Pull Emails Or Reports From API"},
+            "migrate": {"color": "#4ECDC4", "icon": "š", "desc": "Unzip and Move Downloaded Files"},
+            "refresh": {"color": "#45B7D1", "icon": "š", "desc": "Refresh ASN Metadata"},
+            "process": {"color": "#96CEB4", "icon": "āļø", "desc": "Process Data By Cached ASN Data or Automaticaly Retrieve ASN Data"},
+            "country": {"color": "#FFEAA7", "icon": "š", "desc": "Sort Processed Data By Country"},
+            "service": {"color": "#DDA0DD", "icon": "š ļø", "desc": "Create Service Folders and Sort Per Organisation"},
+            "ingest": {"color": "#FFB347", "icon": "š„", "desc": "Ingest Into Knowledgebase"},
+            "all": {"color": "#FFB347", "icon": "ā”", "desc": "Run All Processes Related to Building the Knowledgebase"}
         }
         
         self.running_commands = set()
@@ -220,11 +222,11 @@ class ModernCommandGUI:
                     subprocess.run(["open", folder_path])
                 else:  # Linux
                     subprocess.run(["xdg-open", folder_path])
-                self.log_message(f"📂 Opened folder: {folder_path}", "info")
+                self.log_message(f"š Opened folder: {folder_path}", "info")
             else:
-                self.log_message(f"❌ Cannot open folder - does not exist: {folder_path}", "error")
+                self.log_message(f"ā Cannot open folder - does not exist: {folder_path}", "error")
         except Exception as e:
-            self.log_message(f"❌ Error opening folder {folder_path}: {str(e)}", "error")
+            self.log_message(f"ā Error opening folder {folder_path}: {str(e)}", "error")
         
     def setup_ui(self):
         """Setup the main UI components"""
@@ -265,7 +267,7 @@ class ModernCommandGUI:
         # Status indicator
         self.status_indicator = ctk.CTkLabel(
             header_frame,
-            text="● Ready",
+            text="ā Ready",
             font=ctk.CTkFont(size=16),
             text_color="#00FF88"
         )
@@ -311,7 +313,7 @@ class ModernCommandGUI:
             font=ctk.CTkFont(size=14, weight="bold"),  # larger, bold font
             fg_color="#3B4252",     # dark slate background
         )
-        self.report_dropdown.set("📄 Report Generation")
+        self.report_dropdown.set("š Report Generation")
         self.report_dropdown.pack(side="left", padx=(10, 0))
         # Add separator
         separator3 = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
@@ -323,7 +325,7 @@ class ModernCommandGUI:
         # Refresh folders button
         refresh_btn = ctk.CTkButton(
             nav_container,
-            text="🔄 Refresh",
+            text="š Refresh",
             width=80,  # reduced width
             height=30, # reduced height
             corner_radius=8,
@@ -337,7 +339,7 @@ class ModernCommandGUI:
         # Resource Monitor button
         resource_monitor_btn = ctk.CTkButton(
             nav_container,
-            text="🧠 Resources",
+            text="š§  Resources",
             width=80,  # reduced width
             height=30,  # reduced height
             corner_radius=8,
@@ -360,7 +362,7 @@ class ModernCommandGUI:
 
         textbox = ctk.CTkTextbox(runner_window, wrap="word")
         textbox.pack(expand=True, fill="both", padx=10, pady=10)
-        textbox.insert("end", f"▶️ Running: {display_name}\n\n")
+        textbox.insert("end", f"ā¶ļø Running: {display_name}\n\n")
         textbox.configure(state="disabled")
 
         def append_line_safe(line):
@@ -385,7 +387,7 @@ class ModernCommandGUI:
                 process.stdout.close()
                 process.wait()
 
-                runner_window.after(0, append_line_safe, "\n\n✅ Done. Closing in 10 seconds...")
+                runner_window.after(0, append_line_safe, "\n\nā Done. Closing in 10 seconds...")
 
                 def delayed_close():
                     time.sleep(10)
@@ -395,7 +397,7 @@ class ModernCommandGUI:
                 threading.Thread(target=delayed_close, daemon=True).start()
 
             except Exception as e:
-                runner_window.after(0, append_line_safe, f"\n❌ Error: {e}")
+                runner_window.after(0, append_line_safe, f"\nā Error: {e}")
 
         threading.Thread(target=run_script, daemon=True).start()
 
@@ -421,7 +423,7 @@ class ModernCommandGUI:
         # Main dropdown button
         self.archive_dropdown_btn = ctk.CTkButton(
             dropdown_frame,
-            text="📁 Archive Folders ▼",
+            text="š Archive Folders ā¼",
             width=180,
             height=40,
             corner_radius=8,
@@ -443,7 +445,7 @@ class ModernCommandGUI:
         
         self.folder_status_label = ctk.CTkLabel(
             status_frame,
-            text="📊 Checking folders...",
+            text="š Checking folders...",
             font=ctk.CTkFont(size=12),
             text_color="#888888"
         )
@@ -451,13 +453,44 @@ class ModernCommandGUI:
         
         # Initial folder check
         self.refresh_folder_status()
+		
+    def hide_dropdown(self):
+        """Hide archive folders dropdown menu"""
+        if self.archive_dropdown_menu:
+            self.archive_dropdown_menu.destroy()
+            self.archive_dropdown_menu = None
 
+        self.archive_dropdown_btn.configure(
+            text="š Archive Folders ā¼",
+            fg_color="#3B4252"
+        )
+        self.dropdown_visible = False  # Archive dropdown flag
+
+    def hide_mapping_dropdown(self):
+        """Hide mapping files dropdown menu"""
+        if self.mapping_dropdown_menu:
+            self.mapping_dropdown_menu.destroy()
+            self.mapping_dropdown_menu = None
+
+        self.mapping_dropdown_btn.configure(
+            text="š Mapping Files ā¼",
+            fg_color="#5D4E75"
+        )
+    
+        self.mapping_dropdown_visible = False  # Mapping dropdown flag
+	
     def toggle_archive_dropdown(self):
         """Toggle the archive folders dropdown menu"""
         if self.dropdown_visible:
             self.hide_dropdown()
         else:
             self.show_dropdown()
+			
+    def toggle_mapping_dropdown(self):
+        if self.mapping_dropdown_visible:
+            self.hide_mapping_dropdown()
+        else:
+            self.show_mapping_dropdown()
 		
     def create_mapping_dropdown(self, parent):
         """Create the Mapping Files dropdown menu"""
@@ -467,7 +500,7 @@ class ModernCommandGUI:
         # Main dropdown button
         self.mapping_dropdown_btn = ctk.CTkButton(
             dropdown_frame,
-            text="📝 Mapping Files ▼",
+            text="š Mapping Files ā¼",
             width=180,
             height=40,
             corner_radius=8,
@@ -512,7 +545,7 @@ class ModernCommandGUI:
         
         header_label = ctk.CTkLabel(
             header_frame,
-            text="📝 Mapping Files",
+            text="š Mapping Files",
             font=ctk.CTkFont(size=14, weight="bold"),
             text_color="#ECEFF4"
         )
@@ -529,7 +562,7 @@ class ModernCommandGUI:
         
         # Update button appearance
         self.mapping_dropdown_btn.configure(
-            text="📝 Mapping Files ▲",
+            text="š Mapping Files ā²",
             fg_color="#6A5688"
         )
         
@@ -559,7 +592,7 @@ class ModernCommandGUI:
         left_frame.pack(side="left", fill="both", expand=True)
         
         # File name with status icon
-        status_icon = "✅" if file_exists else "❌"
+        status_icon = "ā" if file_exists else "ā"
         name_label = ctk.CTkLabel(
             left_frame,
             text=f"{status_icon} {file_info['icon']} {file_info['display_name']}",
@@ -583,7 +616,7 @@ class ModernCommandGUI:
         if file_exists:
             action_btn = ctk.CTkButton(
                 content_frame,
-                text="✏️ Edit",
+                text="āļø Edit",
                 width=70,
                 height=30,
                 corner_radius=6,
@@ -595,7 +628,7 @@ class ModernCommandGUI:
         else:
             action_btn = ctk.CTkButton(
                 content_frame,
-                text="➕ Create",
+                text="ā Create",
                 width=80,
                 height=30,
                 corner_radius=6,
@@ -622,7 +655,7 @@ class ModernCommandGUI:
             self.mapping_dropdown_menu = None
             
         self.mapping_dropdown_btn.configure(
-            text="📝 Mapping Files ▼",
+            text="š Mapping Files ā¼",
             fg_color="#5D4E75"
         )
         
@@ -661,7 +694,7 @@ class ModernCommandGUI:
                 content = f.read()
             self.create_file_form(file_key, file_info, content, is_new=False)
         except Exception as e:
-            self.log_message(f"❌ Error reading file {file_info['path']}: {str(e)}", "error")
+            self.log_message(f"ā Error reading file {file_info['path']}: {str(e)}", "error")
             
     def create_file_editor(self, file_key, file_info):
         """Create new file editor"""
@@ -726,125 +759,214 @@ class ModernCommandGUI:
         # File path info
         path_label = ctk.CTkLabel(
             header_frame,
-            text=f"📁 {file_info['path']}",
+            text=f"š {file_info['path']}",
             font=ctk.CTkFont(size=12),
             text_color="#D8DEE9"
         )
         path_label.pack(side="right", padx=20, pady=20)
         
     def create_env_editor(self, parent, file_key, file_info, content, is_new):
-        """Create environment variables editor"""
+        """Create environment variables editor with fields for KEY=VALUE pairs"""
         editor_frame = ctk.CTkFrame(parent, corner_radius=10)
         editor_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
-        
+
         # Instructions
         inst_frame = ctk.CTkFrame(editor_frame, height=50, corner_radius=8, fg_color="#4C566A")
         inst_frame.pack(fill="x", padx=15, pady=15)
         inst_frame.pack_propagate(False)
-        
+
         inst_label = ctk.CTkLabel(
             inst_frame,
-            text="💡 Enter environment variables in KEY=VALUE format, one per line",
+            text="⚙ Enter environment variables as key-value pairs",
             font=ctk.CTkFont(size=12),
             text_color="#ECEFF4"
         )
         inst_label.pack(pady=15)
-        
-        # Text editor
-        text_frame = ctk.CTkFrame(editor_frame, fg_color="#2E3440")
-        text_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
-        
-        # Create text widget with syntax highlighting simulation
-        text_widget = tk.Text(
-            text_frame,
-            bg="#2E3440",
-            fg="#D8DEE9",
-            font=("Consolas", 11),
-            wrap=tk.WORD,
-            insertbackground="#88C0D0",
-            selectbackground="#434C5E",
-            selectforeground="#ECEFF4",
-            relief=tk.FLAT,
-            borderwidth=0
-        )
-        
-        # Scrollbar
-        scrollbar = CTkScrollbar(text_frame, command=text_widget.yview)
-        text_widget.config(yscrollcommand=scrollbar.set)
-        
-        text_widget.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-        scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=10)
-        
-        # Insert content
-        text_widget.insert("1.0", content)
-        
-        # Store reference for saving
-        setattr(form_window, 'text_widget', text_widget)
-        setattr(form_window, 'file_info', file_info)
-        setattr(form_window, 'is_new', is_new)
-        
+
+        # Scrollable frame for key-value rows
+        scroll_container = ctk.CTkScrollableFrame(editor_frame, fg_color="#2E3440")
+        scroll_container.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+
+        # Parse content into dict
+        env_vars = {}
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            env_vars[k.strip()] = v.strip()
+
+        # Store entries here for access on save
+        self.env_entries = []
+
+        # Create header row for the table
+        header_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(0,5))
+        ctk.CTkLabel(header_frame, text="Key", width=200, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=(5,0))
+        ctk.CTkLabel(header_frame, text="Value", width=400, anchor="w", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=(5,0))
+
+        # For each env var, create a row with two entries: key and value
+        for key, val in env_vars.items():
+            row_frame = ctk.CTkFrame(scroll_container, fg_color="#3B4252", corner_radius=8)
+            row_frame.pack(fill="x", pady=3, padx=5)
+
+            key_entry = ctk.CTkEntry(row_frame, width=200)
+            key_entry.insert(0, key)
+            key_entry.pack(side="left", padx=(5, 10), pady=5)
+
+            val_entry = ctk.CTkEntry(row_frame, width=400)
+            val_entry.insert(0, val)
+            val_entry.pack(side="left", padx=(0, 5), pady=5)
+
+            self.env_entries.append((key_entry, val_entry))
+
+        # Add a button to add a new empty row
+        add_row_btn = ctk.CTkButton(editor_frame, text="+ Add Variable", width=120, command=self.add_env_var_row)
+        add_row_btn.pack(pady=(0, 10))
+
+        # Store references for saving
+        self.active_forms[file_key].env_entries = self.env_entries
+        self.active_forms[file_key].file_info = file_info
+        self.active_forms[file_key].is_new = is_new
+
         # Action buttons
         self.create_form_buttons(editor_frame, file_key, file_info, is_new)
-        
+
+
+    def add_env_var_row(self):
+        """Helper function to add a new empty key-value row to the env editor"""
+
+        # Find the current env editor scroll container (assumes only one active form open)
+        # Or you can adjust this to pass form_window or parent if needed
+        for form_window in self.active_forms.values():
+            scroll_container = None
+            for child in form_window.winfo_children():
+                if isinstance(child, ctk.CTkFrame):
+                    for subchild in child.winfo_children():
+                        if isinstance(subchild, ctk.CTkScrollableFrame):
+                            scroll_container = subchild
+                            break
+                if scroll_container:
+                    break
+
+            if scroll_container:
+                row_frame = ctk.CTkFrame(scroll_container, fg_color="#3B4252", corner_radius=8)
+                row_frame.pack(fill="x", pady=3, padx=5)
+
+                key_entry = ctk.CTkEntry(row_frame, width=200)
+                key_entry.pack(side="left", padx=(5, 10), pady=5)
+
+                val_entry = ctk.CTkEntry(row_frame, width=400)
+                val_entry.pack(side="left", padx=(0, 5), pady=5)
+
+                # Append new entries to the stored env_entries list
+                if hasattr(form_window, 'env_entries'):
+                    form_window.env_entries.append((key_entry, val_entry))
+
+                break  # only add to the first found active form
+
+
+
     def create_csv_editor(self, parent, file_key, file_info, content, is_new):
-        """Create CSV file editor with table-like interface"""
+        """Create CSV editor with a table/grid interface using Entry widgets"""
+        import csv
+        from io import StringIO
+
         editor_frame = ctk.CTkFrame(parent, corner_radius=10)
         editor_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
-        
+
         # Instructions
         inst_frame = ctk.CTkFrame(editor_frame, height=50, corner_radius=8, fg_color="#4C566A")
         inst_frame.pack(fill="x", padx=15, pady=15)
         inst_frame.pack_propagate(False)
-        
+
         inst_label = ctk.CTkLabel(
             inst_frame,
-            text="📊 Edit CSV data - Use standard CSV format with commas as separators",
+            text="🗒 Edit CSV data in grid - rows and columns editable",
             font=ctk.CTkFont(size=12),
             text_color="#ECEFF4"
         )
         inst_label.pack(pady=15)
-        
-        # Text editor with CSV-specific styling
-        text_frame = ctk.CTkFrame(editor_frame, fg_color="#2E3440")
-        text_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
-        
-        text_widget = tk.Text(
-            text_frame,
-            bg="#2E3440",
-            fg="#D8DEE9",
-            font=("Consolas", 11),
-            wrap=tk.NONE,  # No wrap for CSV
-            insertbackground="#88C0D0",
-            selectbackground="#434C5E",
-            selectforeground="#ECEFF4",
-            relief=tk.FLAT,
-            borderwidth=0
-        )
-        
-        # Scrollbars for CSV (both horizontal and vertical)
-        v_scrollbar = CTkScrollbar(text_frame, command=text_widget.yview)
-        h_scrollbar = CTkScrollbar(text_frame, orientation="horizontal", command=text_widget.xview)
-        text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-        
-        text_widget.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=(10, 0))
-        v_scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 10), pady=(10, 0))
-        h_scrollbar.grid(row=1, column=0, sticky="ew", padx=(10, 0), pady=(0, 10))
-        
-        text_frame.grid_rowconfigure(0, weight=1)
-        text_frame.grid_columnconfigure(0, weight=1)
-        
-        # Insert content or default CSV structure
-        if is_new and not content.strip():
-            content = "# CSV Headers (remove this comment line)\ncolumn1,column2,column3\nvalue1,value2,value3\n"
-        text_widget.insert("1.0", content)
-        
-        # Store reference for saving
-        setattr(form_window, 'text_widget', text_widget)
-        setattr(form_window, 'file_info', file_info)
-        setattr(form_window, 'is_new', is_new)
-        
+
+        # Scrollable frame for the CSV grid
+        scroll_container = ctk.CTkScrollableFrame(editor_frame, fg_color="#2E3440")
+        scroll_container.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+
+        # Parse CSV content
+        csv_reader = csv.reader(StringIO(content))
+        rows = list(csv_reader)
+
+        # If empty or new file, provide default CSV data
+        if (not rows or len(rows) == 0 or (len(rows) == 1 and all(not c.strip() for c in rows[0]))) and is_new:
+            rows = [
+                ["column1", "column2", "column3"],
+                ["value1", "value2", "value3"]
+            ]
+
+        self.csv_entries = []
+
+        # Create grid of Entry widgets
+        for r, row in enumerate(rows):
+            row_entries = []
+            for c, cell in enumerate(row):
+                e = ctk.CTkEntry(scroll_container, width=120)
+                e.grid(row=r, column=c, padx=2, pady=2)
+                e.insert(0, cell)
+                row_entries.append(e)
+            self.csv_entries.append(row_entries)
+
+        # Add buttons to add/remove rows and columns below the grid
+        btn_frame = ctk.CTkFrame(editor_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=15, pady=10)
+
+        def add_row():
+            row_idx = len(self.csv_entries)
+            row_entries = []
+            for c in range(len(self.csv_entries[0]) if self.csv_entries else 3):
+                e = ctk.CTkEntry(scroll_container, width=120)
+                e.grid(row=row_idx, column=c, padx=2, pady=2)
+                row_entries.append(e)
+            self.csv_entries.append(row_entries)
+
+        def add_column():
+            col_idx = len(self.csv_entries[0]) if self.csv_entries else 0
+            for r, row_entries in enumerate(self.csv_entries):
+                e = ctk.CTkEntry(scroll_container, width=120)
+                e.grid(row=r, column=col_idx, padx=2, pady=2)
+                row_entries.append(e)
+
+        def remove_row():
+            if not self.csv_entries:
+                return
+            last_row = self.csv_entries.pop()
+            for e in last_row:
+                e.destroy()
+
+        def remove_column():
+            if not self.csv_entries or not self.csv_entries[0]:
+                return
+            col_idx = len(self.csv_entries[0]) - 1
+            for row_entries in self.csv_entries:
+                e = row_entries.pop()
+                e.destroy()
+
+        add_row_btn = ctk.CTkButton(btn_frame, text="Add Row", width=100, command=add_row)
+        add_row_btn.pack(side="left", padx=5)
+        remove_row_btn = ctk.CTkButton(btn_frame, text="Remove Row", width=100, command=remove_row)
+        remove_row_btn.pack(side="left", padx=5)
+        add_col_btn = ctk.CTkButton(btn_frame, text="Add Column", width=100, command=add_column)
+        add_col_btn.pack(side="left", padx=5)
+        remove_col_btn = ctk.CTkButton(btn_frame, text="Remove Column", width=120, command=remove_column)
+        remove_col_btn.pack(side="left", padx=5)
+
+        # Save reference for saving
+        setattr(self.active_forms[file_key], 'csv_entries', self.csv_entries)
+        setattr(self.active_forms[file_key], 'file_info', file_info)
+        setattr(self.active_forms[file_key], 'is_new', is_new)
+
         # Action buttons
         self.create_form_buttons(editor_frame, file_key, file_info, is_new)
+
         
     def create_form_buttons(self, parent, file_key, file_info, is_new):
         """Create action buttons for file forms"""
@@ -859,7 +981,7 @@ class ModernCommandGUI:
         status_text = "Creating new file" if is_new else "Editing existing file"
         status_label = ctk.CTkLabel(
             info_frame,
-            text=f"📝 {status_text}",
+            text=f"š {status_text}",
             font=ctk.CTkFont(size=12),
             text_color="#5E81AC"
         )
@@ -872,7 +994,7 @@ class ModernCommandGUI:
         # Cancel button
         cancel_btn = ctk.CTkButton(
             btn_frame,
-            text="❌ Cancel",
+            text="ā Cancel",
             width=100,
             height=35,
             corner_radius=8,
@@ -886,7 +1008,7 @@ class ModernCommandGUI:
         # Save button
         save_btn = ctk.CTkButton(
             btn_frame,
-            text="💾 Save",
+            text="š¾ Save",
             width=100,
             height=35,
             corner_radius=8,
@@ -900,7 +1022,7 @@ class ModernCommandGUI:
         # Save & Close button
         save_close_btn = ctk.CTkButton(
             btn_frame,
-            text="💾 Save & Close",
+            text="š¾ Save & Close",
             width=120,
             height=35,
             corner_radius=8,
@@ -910,45 +1032,76 @@ class ModernCommandGUI:
             command=lambda: self.save_and_close_file(file_key)
         )
         save_close_btn.pack(side="left", padx=5)
-        
     def save_file(self, file_key):
         """Save file content"""
         if file_key not in self.active_forms:
             return
-            
+
         form_window = self.active_forms[file_key]
         file_info = form_window.file_info
-        text_widget = form_window.text_widget
-        
+
         try:
-            # Get content from text widget
-            content = text_widget.get("1.0", tk.END).rstrip()
-            
+            if file_info["type"] == "env":
+                # Collect key=value pairs from env_entries
+                env_pairs = []
+                for key_entry, val_entry in getattr(form_window, "env_entries", []):
+                    key = key_entry.get().strip()
+                    val = val_entry.get().strip()
+                    if key:  # only save entries with a key
+                        env_pairs.append(f"{key}={val}")
+                content = "\n".join(env_pairs)
+
+            elif file_info["type"] == "csv":
+                # Collect CSV data from grid entries
+                csv_rows = []
+                for row_entries in getattr(form_window, "csv_entries", []):
+                    row_values = [e.get() for e in row_entries]
+                    csv_rows.append(row_values)
+
+
+                output = io.StringIO()
+                writer = csv.writer(output)
+                writer.writerows(csv_rows)
+                content = output.getvalue()
+
+            else:
+                # For other types, get content from text_widget
+                text_widget = getattr(form_window, "text_widget", None)
+                if not text_widget:
+                    self.log_message(f"Error: No text widget found for {file_info['display_name']}", "error")
+                    return
+                content = text_widget.get("1.0", tk.END).rstrip()
+
             # Create directory if it doesn't exist
             file_dir = os.path.dirname(file_info["path"])
             if file_dir and not os.path.exists(file_dir):
                 os.makedirs(file_dir, exist_ok=True)
-                self.log_message(f"📁 Created directory: {file_dir}", "info")
-            
+                self.log_message(f"š Created directory: {file_dir}", "info")
+
             # Save file
             with open(file_info["path"], 'w', encoding='utf-8') as f:
                 f.write(content)
-                
-            self.log_message(f"💾 Successfully saved: {file_info['display_name']}", "success")
-            
+
+            self.log_message(f"š¾ Successfully saved: {file_info['display_name']}", "success")
+
             # Update form status
             form_window.is_new = False
-            
+
             # Refresh status indicators
             self.refresh_folder_status()
-            
+
         except Exception as e:
-            self.log_message(f"❌ Error saving {file_info['display_name']}: {str(e)}", "error")
-            
+            self.log_message(f"ā Error saving {file_info['display_name']}: {str(e)}", "error")
+
+
     def save_and_close_file(self, file_key):
-        """Save file and close form"""
+        self.log_message(f"Attempting to save and close form for: {file_key}", "info")
         self.save_file(file_key)
+        self.log_message(f"Save complete, now closing form for: {file_key}", "info")
         self.close_file_form(file_key)
+
+
+
         
     def close_file_form(self, file_key):
         """Close file form"""
@@ -992,7 +1145,7 @@ class ModernCommandGUI:
         
         header_label = ctk.CTkLabel(
             header_frame,
-            text="📁 Archive Folders",
+            text="š Archive Folders",
             font=ctk.CTkFont(size=14, weight="bold"),
             text_color="#ECEFF4"
         )
@@ -1012,7 +1165,7 @@ class ModernCommandGUI:
         
         # Update button appearance
         self.archive_dropdown_btn.configure(
-            text="📁 Archive Folders ▲",
+            text="š Archive Folders ā²",
             fg_color="#434C5E"
         )
         
@@ -1042,7 +1195,7 @@ class ModernCommandGUI:
         left_frame.pack(side="left", fill="both", expand=True)
         
         # Folder name with status icon
-        status_icon = "✅" if folder_exists else "❌"
+        status_icon = "ā" if folder_exists else "ā"
         name_label = ctk.CTkLabel(
             left_frame,
             text=f"{status_icon} {folder_name}",
@@ -1066,7 +1219,7 @@ class ModernCommandGUI:
         if folder_exists:
             action_btn = ctk.CTkButton(
                 content_frame,
-                text="📂 Open",
+                text="š Open",
                 width=70,
                 height=30,
                 corner_radius=6,
@@ -1078,7 +1231,7 @@ class ModernCommandGUI:
         else:
             action_btn = ctk.CTkButton(
                 content_frame,
-                text="⚠️ Missing",
+                text="ā ļø Missing",
                 width=80,
                 height=30,
                 corner_radius=6,
@@ -1102,7 +1255,7 @@ class ModernCommandGUI:
         
         run_all_btn = ctk.CTkButton(
             run_all_frame,
-            text="⚡ Run All Commands (Creates Missing Folders)",
+            text="ā” Run All Commands (Creates Missing Folders)",
             height=35,
             corner_radius=8,
             font=ctk.CTkFont(size=12, weight="bold"),
@@ -1120,14 +1273,14 @@ class ModernCommandGUI:
     def suggest_run_all(self, folder_name):
         """Suggest running 'all' command when folder is missing"""
         self.hide_dropdown()
-        self.log_message(f"⚠️ Folder '{folder_name}' does not exist!", "warning")
-        self.log_message("💡 Suggestion: Run the 'ALL' command to create missing folders and build the complete system", "info")
-        self.log_message("🔄 Click the 'ALL' button below or use 'Run All Commands' from Archive Folders menu", "info")
+        self.log_message(f"ā ļø Folder '{folder_name}' does not exist!", "warning")
+        self.log_message("š” Suggestion: Run the 'ALL' command to create missing folders and build the complete system", "info")
+        self.log_message("š Click the 'ALL' button below or use 'Run All Commands' from Archive Folders menu", "info")
         
     def run_all_from_dropdown(self):
         """Run 'all' command from dropdown menu"""
         self.hide_dropdown()
-        self.log_message("🚀 Running ALL commands from Archive Folders menu...", "info")
+        self.log_message("š Running ALL commands from Archive Folders menu...", "info")
         self.execute_command("all")
         
     def fade_in_menu(self):
@@ -1139,18 +1292,7 @@ class ModernCommandGUI:
                 self.archive_dropdown_menu.attributes('-alpha', new_alpha)
                 self.root.after(20, self.fade_in_menu)
                 
-    def hide_dropdown(self):
-        """Hide the archive folders dropdown menu"""
-        if self.archive_dropdown_menu:
-            self.archive_dropdown_menu.destroy()
-            self.archive_dropdown_menu = None
-            
-        self.archive_dropdown_btn.configure(
-            text="📁 Archive Folders ▼",
-            fg_color="#3B4252"
-        )
-        
-        self.dropdown_visible = False
+ 
         self.root.unbind("<Button-1>")
         
     def on_click_outside_dropdown(self, event):
@@ -1207,13 +1349,13 @@ class ModernCommandGUI:
                 existing_files += 1
                 
         if existing_folders == total_folders and existing_files == total_files:
-            status_text = f"✅ All ready ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_text = f"ā All ready ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
             status_color = "#A3BE8C"
         elif existing_folders > 0 or existing_files > 0:
-            status_text = f"⚠️ Partial setup ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_text = f"ā ļø Partial setup ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
             status_color = "#EBCB8B"
         else:
-            status_text = f"❌ Setup needed ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_text = f"ā Setup needed ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
             status_color = "#BF616A"
             
         if hasattr(self, 'folder_status_label'):
@@ -1223,7 +1365,7 @@ class ModernCommandGUI:
             )
         
         # Log folder status
-        self.log_message(f"📊 System Status: {status_text}", "info")
+        self.log_message(f"š System Status: {status_text}", "info")
         
     def on_closing(self):
         """Handle application closing"""
@@ -1274,13 +1416,13 @@ class ModernCommandGUI:
                 existing_folders += 1
                 
         if existing_folders == total_folders:
-            status_text = f"✅ All folders ready ({existing_folders}/{total_folders})"
+            status_text = f"ā All folders ready ({existing_folders}/{total_folders})"
             status_color = "#A3BE8C"
         elif existing_folders > 0:
-            status_text = f"⚠️ Some folders missing ({existing_folders}/{total_folders})"
+            status_text = f"ā ļø Some folders missing ({existing_folders}/{total_folders})"
             status_color = "#EBCB8B"
         else:
-            status_text = f"❌ No folders found ({existing_folders}/{total_folders})"
+            status_text = f"ā No folders found ({existing_folders}/{total_folders})"
             status_color = "#BF616A"
             
         self.folder_status_label.configure(
@@ -1289,7 +1431,7 @@ class ModernCommandGUI:
         )
         
         # Log folder status
-        self.log_message(f"📊 Folder Status: {status_text}", "info")
+        self.log_message(f"š Folder Status: {status_text}", "info")
         
     def create_command_section(self, parent):
         """Create the command buttons section"""
@@ -1299,7 +1441,7 @@ class ModernCommandGUI:
         # Section title
         cmd_title = ctk.CTkLabel(
             cmd_frame,
-            text="🎛️ Command Panel",
+            text="šļø Command Panel",
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color="#FFFFFF"
         )
@@ -1387,7 +1529,7 @@ class ModernCommandGUI:
     
         console_title = ctk.CTkLabel(
             console_header,
-            text="💻 Console Output",
+            text="š» Console Output",
             font=ctk.CTkFont(size=16, weight="bold")
         )
         console_title.pack(side="left", padx=15, pady=10)
@@ -1411,7 +1553,7 @@ class ModernCommandGUI:
         # Keyboard shortcut label
         shortcut_label = ctk.CTkLabel(
             button_frame,
-            text="⌃C to stop",
+            text="āC to stop",
             font=ctk.CTkFont(size=10),
             text_color="#888888"
         )
@@ -1420,7 +1562,7 @@ class ModernCommandGUI:
         # Clear button
         clear_btn = ctk.CTkButton(
             button_frame,
-            text="🗑️ Clear",
+            text="šļø Clear",
             width=80,
             height=25,
             font=ctk.CTkFont(size=12),
@@ -1520,19 +1662,19 @@ class ModernCommandGUI:
         """Stop a running command using SIGINT (Ctrl+C)"""
         if command in self.running_commands:
             self.process_manager.send_sigint(command)
-            self.log_message(f"🛑 Sending Ctrl+C to command: {command}", "warning")
+            self.log_message(f"š Sending Ctrl+C to command: {command}", "warning")
         
     def _run_command(self, command):
         """Run command in subprocess with proper process management"""
         process = None
         try:
-            self.log_message(f"🚀 Starting command: {command}", "info")
+            self.log_message(f"š Starting command: {command}", "info")
             
             # Check if the original file exists
             script_path = "shadow_server_data_analysis_system_builder_and_updater.py"
             if not os.path.exists(script_path):
                 # Create a mock script for demonstration
-                self.log_message(f"⚠️ Original script not found. Running simulation for '{command}'...", "warning")
+                self.log_message(f"ā ļø Original script not found. Running simulation for '{command}'...", "warning")
                 self._simulate_command(command)
             else:
                 # Run the actual command with proper buffering
@@ -1601,14 +1743,14 @@ class ModernCommandGUI:
                 return_code = process.wait()
                 
                 if return_code == 0:
-                    self.output_queue.put(("success", f"✅ Command '{command}' completed successfully"))
+                    self.output_queue.put(("success", f"ā Command '{command}' completed successfully"))
                     # Refresh folder status after successful command completion
                     self.root.after(1000, self.refresh_folder_status)
                 else:
-                    self.output_queue.put(("error", f"❌ Command '{command}' failed with code {return_code}"))
+                    self.output_queue.put(("error", f"ā Command '{command}' failed with code {return_code}"))
                     
         except Exception as e:
-            self.output_queue.put(("error", f"❌ Error executing '{command}': {str(e)}"))
+            self.output_queue.put(("error", f"ā Error executing '{command}': {str(e)}"))
         finally:
             # Clean up
             if process:
@@ -1651,15 +1793,15 @@ class ModernCommandGUI:
                 # Simulate creating the folder
                 try:
                     os.makedirs(folder_info["path"], exist_ok=True)
-                    self.output_queue.put(("success", f"[ALL] ✅ Created folder: {folder_info['path']}"))
+                    self.output_queue.put(("success", f"[ALL] ā Created folder: {folder_info['path']}"))
                 except Exception as e:
-                    self.output_queue.put(("error", f"[ALL] ❌ Failed to create folder {folder_info['path']}: {str(e)}"))
+                    self.output_queue.put(("error", f"[ALL] ā Failed to create folder {folder_info['path']}: {str(e)}"))
         
         # Simulate success/failure
         if random.random() > 0.2:  # 80% success rate
-            self.output_queue.put(("success", f"✅ Command '{command}' simulation completed successfully"))
+            self.output_queue.put(("success", f"ā Command '{command}' simulation completed successfully"))
         else:
-            self.output_queue.put(("error", f"❌ Command '{command}' simulation failed"))
+            self.output_queue.put(("error", f"ā Command '{command}' simulation failed"))
             
     def start_output_monitor(self):
         """Start monitoring output queue with optimized updates"""
@@ -1815,10 +1957,10 @@ class ModernCommandGUI:
         running_count = len(self.running_commands)
         
         if running_count == 0:
-            self.status_indicator.configure(text="● Ready", text_color="#00FF88")
+            self.status_indicator.configure(text="ā Ready", text_color="#00FF88")
             self.status_label.configure(text="Ready to execute commands")
         else:
-            self.status_indicator.configure(text="● Running", text_color="#FFD700")
+            self.status_indicator.configure(text="ā Running", text_color="#FFD700")
             self.status_label.configure(text=f"Executing {running_count} command(s)...")
             
         self.running_count_label.configure(text=f"Running: {running_count}")
@@ -1847,8 +1989,8 @@ class ModernCommandGUI:
         if self.console_buffer and self.console_text:
             self.flush_console_batch()
             
-        self.log_message("🎉 Shadow Command Center initialized", "success")
-        self.log_message("📁 Archive folder status checked - see navigation bar", "info")
+        self.log_message("š Shadow Command Center initialized", "success")
+        self.log_message("š Archive folder status checked - see navigation bar", "info")
         self.log_message("Click any command button to execute", "info")
         
         # Center window on screen
