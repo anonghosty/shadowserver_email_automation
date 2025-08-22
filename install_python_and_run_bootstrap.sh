@@ -2,6 +2,8 @@
 
 set -e
 
+#!/bin/bash
+
 # Step 1: Get absolute path to ingestion_gui.py
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYTHON_SCRIPT="$SCRIPT_DIR/ingestion_gui.py"
@@ -16,18 +18,27 @@ LAUNCHER_C=$(mktemp)
 
 echo "📝 Writing C launcher to: $LAUNCHER_C"
 
-# Write the C code to the file
+# Write the C code to the file (embed the SCRIPT_DIR path)
 cat > "$LAUNCHER_C" <<EOF
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 int main(int argc, char** argv) {
-    char command[2048] = "python3 \"$PYTHON_SCRIPT\"";
+    // Change to the script directory
+    if (chdir("${SCRIPT_DIR}") != 0) {
+        perror("❌ Failed to change directory to script dir");
+        return 1;
+    }
+
+    // Build the command string
+    char command[2048] = "python3 \"ingestion_gui.py\"";
     for (int i = 1; i < argc; i++) {
         strcat(command, " ");
         strcat(command, argv[i]);
     }
+
     return system(command);
 }
 EOF
