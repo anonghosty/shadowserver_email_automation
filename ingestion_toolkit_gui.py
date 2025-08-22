@@ -13,6 +13,7 @@ import time
 import random
 from collections import deque
 from customtkinter import CTkScrollbar
+from resource_monitor import ResourceMonitorApp
 
 # Set appearance mode and color theme
 ctk.set_appearance_mode("dark")
@@ -271,7 +272,6 @@ class ModernCommandGUI:
         self.status_indicator.pack(side="right", padx=20, pady=20)
 
     def create_navigation_bar(self, parent):
-        """Create a modern navigation bar with dropdowns"""
         nav_frame = ctk.CTkFrame(parent, height=60, corner_radius=10, fg_color=("#2B2B2B", "#1a1a1a"))
         nav_frame.pack(fill="x", padx=10, pady=(0, 15))
         nav_frame.pack_propagate(False)
@@ -310,6 +310,31 @@ class ModernCommandGUI:
             command=self.refresh_folder_status
         )
         refresh_btn.pack(side="right", padx=(10, 0))
+
+        # Resource Monitor button
+        resource_monitor_btn = ctk.CTkButton(
+            nav_container,
+            text="🧠 Resource Monitor",
+            width=160,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#6A82FB",
+            hover_color="#576CDF",
+            command=self.open_resource_monitor
+        )
+        resource_monitor_btn.pack(side="right", padx=(10, 0))
+
+
+    def open_resource_monitor(self):
+        # Check if already open
+        if hasattr(self, "resource_monitor_window") and self.resource_monitor_window.winfo_exists():
+            self.resource_monitor_window.lift()  # Bring to front
+        else:
+            # Create new window instance
+            self.resource_monitor_window = ResourceMonitorApp()
+            self.resource_monitor_window.focus()
+
         
     def create_archive_dropdown(self, parent):
         """Create the Archive Folders dropdown menu"""
