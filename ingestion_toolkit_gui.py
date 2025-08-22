@@ -14,9 +14,6 @@ import random
 from collections import deque
 from customtkinter import CTkScrollbar
 
-
-
-
 # Set appearance mode and color theme
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -138,6 +135,44 @@ class ModernCommandGUI:
         # Process management
         self.process_manager = ProcessManager()
         
+        # Initialize UI attributes first
+        self.console_text = None
+        self.auto_scroll_var = None
+        self.console_buffer = deque(maxlen=5000)
+        
+        # Archive folders to check
+        self.archive_folders = {
+            "sorted_attachments": {
+                "path": "sorted_attachments",
+                "description": "Organized email attachments by type"
+            },
+            "received_shadowserver_reports": {
+                "path": "shadowserver_analysis_system/received_shadowserver_reports",
+                "description": "Raw Shadowserver security reports"
+            }
+        }
+        
+        # Mapping files to edit
+        self.mapping_files = {
+            "env_file": {
+                "path": ".env",
+                "display_name": "Environmental Variables",
+                "description": "Environment configuration settings",
+                "type": "env",
+                "icon": "🔧"
+            },
+            "constituent_map": {
+                "path": "shadowserver_analysis_system/detected_companies/constituent_map.csv",
+                "display_name": "Constituent Map",
+                "description": "Company constituent mapping configuration",
+                "type": "csv",
+                "icon": "📊"
+            }
+        }
+        
+        # Form windows
+        self.active_forms = {}
+        
         # Available commands
         self.commands = {
             "email": {"color": "#FF6B6B", "icon": "📧", "desc": "Pull Emails Or Reports From API"},
@@ -147,16 +182,21 @@ class ModernCommandGUI:
             "country": {"color": "#FFEAA7", "icon": "🌍", "desc": "Sort Processed Data By Country"},
             "service": {"color": "#DDA0DD", "icon": "🛠️", "desc": "Create Service Folders and Sort Per Organisation"},
             "ingest": {"color": "#FFB347", "icon": "📥", "desc": "Ingest Into Knowledgebase"},
-            "all": {"color": "#FFB347", "icon": "!!", "desc": "Run All Processes Related to Building the Knowledgebase"}
+            "all": {"color": "#FFB347", "icon": "⚡", "desc": "Run All Processes Related to Building the Knowledgebase"}
         }
         
         self.running_commands = set()
         self.command_history = []
-        self.console_buffer = deque(maxlen=5000)  # Limit console history
         
         # Performance optimization flags
         self.batch_update_pending = False
         self.last_update_time = time.time()
+        
+        # Navigation dropdown state
+        self.archive_dropdown_menu = None
+        self.mapping_dropdown_menu = None
+        self.dropdown_visible = False
+        self.mapping_dropdown_visible = False
         
         self.setup_ui()
         self.setup_animations()
@@ -164,6 +204,26 @@ class ModernCommandGUI:
         
         # Handle application closing
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+    def check_folder_exists(self, folder_path):
+        """Check if a folder exists and return status"""
+        return os.path.exists(folder_path) and os.path.isdir(folder_path)
+        
+    def open_folder_in_explorer(self, folder_path):
+        """Open folder in system file explorer"""
+        try:
+            if os.path.exists(folder_path):
+                if sys.platform == "win32":
+                    os.startfile(folder_path)
+                elif sys.platform == "darwin":  # macOS
+                    subprocess.run(["open", folder_path])
+                else:  # Linux
+                    subprocess.run(["xdg-open", folder_path])
+                self.log_message(f"📂 Opened folder: {folder_path}", "info")
+            else:
+                self.log_message(f"❌ Cannot open folder - does not exist: {folder_path}", "error")
+        except Exception as e:
+            self.log_message(f"❌ Error opening folder {folder_path}: {str(e)}", "error")
         
     def setup_ui(self):
         """Setup the main UI components"""
@@ -173,6 +233,9 @@ class ModernCommandGUI:
         
         # Header
         self.create_header(main_frame)
+        
+        # Navigation bar
+        self.create_navigation_bar(main_frame)
         
         # Command buttons section
         self.create_command_section(main_frame)
@@ -186,7 +249,7 @@ class ModernCommandGUI:
     def create_header(self, parent):
         """Create the header section"""
         header_frame = ctk.CTkFrame(parent, height=80, corner_radius=10)
-        header_frame.pack(fill="x", padx=10, pady=(10, 20))
+        header_frame.pack(fill="x", padx=10, pady=(10, 15))
         header_frame.pack_propagate(False)
         
         # Title with gradient effect simulation
@@ -206,6 +269,925 @@ class ModernCommandGUI:
             text_color="#00FF88"
         )
         self.status_indicator.pack(side="right", padx=20, pady=20)
+
+    def create_navigation_bar(self, parent):
+        """Create a modern navigation bar with dropdowns"""
+        nav_frame = ctk.CTkFrame(parent, height=60, corner_radius=10, fg_color=("#2B2B2B", "#1a1a1a"))
+        nav_frame.pack(fill="x", padx=10, pady=(0, 15))
+        nav_frame.pack_propagate(False)
+        
+        # Navigation container
+        nav_container = ctk.CTkFrame(nav_frame, fg_color="transparent")
+        nav_container.pack(fill="both", expand=True, padx=15, pady=8)
+        
+        # Archive Folders Dropdown
+        self.create_archive_dropdown(nav_container)
+        
+        # Add separator
+        separator = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
+        separator.pack(side="left", padx=15, pady=5)
+        
+        # Mapping Files Dropdown
+        self.create_mapping_dropdown(nav_container)
+        
+        # Add separator
+        separator2 = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
+        separator2.pack(side="left", padx=15, pady=5)
+        
+        # Folder status indicator
+        self.create_folder_status_indicator(nav_container)
+        
+        # Refresh folders button
+        refresh_btn = ctk.CTkButton(
+            nav_container,
+            text="🔄 Refresh",
+            width=100,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#4ECDC4",
+            hover_color="#45B7A8",
+            command=self.refresh_folder_status
+        )
+        refresh_btn.pack(side="right", padx=(10, 0))
+        
+    def create_archive_dropdown(self, parent):
+        """Create the Archive Folders dropdown menu"""
+        dropdown_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        dropdown_frame.pack(side="left", pady=5)
+        
+        # Main dropdown button
+        self.archive_dropdown_btn = ctk.CTkButton(
+            dropdown_frame,
+            text="📁 Archive Folders ▼",
+            width=180,
+            height=40,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#3B4252",
+            hover_color="#434C5E",
+            command=self.toggle_archive_dropdown
+        )
+        self.archive_dropdown_btn.pack()
+        
+        # Dropdown menu (initially hidden)
+        self.archive_dropdown_menu = None
+        self.dropdown_visible = False
+        
+    def create_folder_status_indicator(self, parent):
+        """Create folder status indicator"""
+        status_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        status_frame.pack(side="left", padx=20)
+        
+        self.folder_status_label = ctk.CTkLabel(
+            status_frame,
+            text="📊 Checking folders...",
+            font=ctk.CTkFont(size=12),
+            text_color="#888888"
+        )
+        self.folder_status_label.pack()
+        
+        # Initial folder check
+        self.refresh_folder_status()
+
+    def toggle_archive_dropdown(self):
+        """Toggle the archive folders dropdown menu"""
+        if self.dropdown_visible:
+            self.hide_dropdown()
+        else:
+            self.show_dropdown()
+		
+    def create_mapping_dropdown(self, parent):
+        """Create the Mapping Files dropdown menu"""
+        dropdown_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        dropdown_frame.pack(side="left", pady=5)
+        
+        # Main dropdown button
+        self.mapping_dropdown_btn = ctk.CTkButton(
+            dropdown_frame,
+            text="📝 Mapping Files ▼",
+            width=180,
+            height=40,
+            corner_radius=8,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#5D4E75",
+            hover_color="#6A5688",
+            command=self.toggle_mapping_dropdown
+        )
+        self.mapping_dropdown_btn.pack()
+        
+    def toggle_mapping_dropdown(self):
+        """Toggle the mapping files dropdown menu"""
+        if self.mapping_dropdown_visible:
+            self.hide_mapping_dropdown()
+        else:
+            self.show_mapping_dropdown()
+            
+    def show_mapping_dropdown(self):
+        """Show the mapping files dropdown menu"""
+        if self.mapping_dropdown_menu:
+            self.hide_mapping_dropdown()
+            
+        # Create dropdown menu
+        dropdown_x = self.mapping_dropdown_btn.winfo_rootx()
+        dropdown_y = self.mapping_dropdown_btn.winfo_rooty() + self.mapping_dropdown_btn.winfo_height() + 5
+        
+        self.mapping_dropdown_menu = ctk.CTkToplevel(self.root)
+        self.mapping_dropdown_menu.withdraw()  # Hide initially
+        self.mapping_dropdown_menu.overrideredirect(True)
+        self.mapping_dropdown_menu.configure(fg_color=("#2B2B2B", "#1a1a1a"))
+        
+        # Calculate menu width and height
+        menu_width = 350
+        menu_height = len(self.mapping_files) * 70 + 60
+        
+        self.mapping_dropdown_menu.geometry(f"{menu_width}x{menu_height}+{dropdown_x}+{dropdown_y}")
+        
+        # Menu header
+        header_frame = ctk.CTkFrame(self.mapping_dropdown_menu, height=40, corner_radius=0, fg_color="#5D4E75")
+        header_frame.pack(fill="x", padx=0, pady=0)
+        header_frame.pack_propagate(False)
+        
+        header_label = ctk.CTkLabel(
+            header_frame,
+            text="📝 Mapping Files",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ECEFF4"
+        )
+        header_label.pack(pady=10)
+        
+        # File items
+        for file_key, file_info in self.mapping_files.items():
+            self.create_mapping_dropdown_item(self.mapping_dropdown_menu, file_key, file_info)
+            
+        # Show menu with fade-in effect
+        self.mapping_dropdown_menu.deiconify()
+        self.mapping_dropdown_menu.attributes('-alpha', 0.0)
+        self.fade_in_mapping_menu()
+        
+        # Update button appearance
+        self.mapping_dropdown_btn.configure(
+            text="📝 Mapping Files ▲",
+            fg_color="#6A5688"
+        )
+        
+        self.mapping_dropdown_visible = True
+        
+        # Bind click outside to close
+        self.root.bind("<Button-1>", self.on_click_outside_mapping_dropdown)
+        
+    def create_mapping_dropdown_item(self, parent, file_key, file_info):
+        """Create a dropdown menu item for a mapping file"""
+        file_exists = os.path.exists(file_info["path"])
+        
+        item_frame = ctk.CTkFrame(parent, height=60, corner_radius=8, fg_color="transparent")
+        item_frame.pack(fill="x", padx=10, pady=2)
+        item_frame.pack_propagate(False)
+        
+        # Main item button
+        item_btn = ctk.CTkFrame(item_frame, corner_radius=6, fg_color=("#E5E5E5", "#2D2D30"))
+        item_btn.pack(fill="both", expand=True)
+        
+        # Content frame
+        content_frame = ctk.CTkFrame(item_btn, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=15, pady=8)
+        
+        # Left side - file info
+        left_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        left_frame.pack(side="left", fill="both", expand=True)
+        
+        # File name with status icon
+        status_icon = "✅" if file_exists else "❌"
+        name_label = ctk.CTkLabel(
+            left_frame,
+            text=f"{status_icon} {file_info['icon']} {file_info['display_name']}",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            anchor="w",
+            text_color="#2E3440" if file_exists else "#BF616A"
+        )
+        name_label.pack(fill="x")
+        
+        # File description
+        desc_label = ctk.CTkLabel(
+            left_frame,
+            text=file_info["description"],
+            font=ctk.CTkFont(size=10),
+            anchor="w",
+            text_color="#5E81AC"
+        )
+        desc_label.pack(fill="x")
+        
+        # Right side - action button
+        if file_exists:
+            action_btn = ctk.CTkButton(
+                content_frame,
+                text="✏️ Edit",
+                width=70,
+                height=30,
+                corner_radius=6,
+                font=ctk.CTkFont(size=10, weight="bold"),
+                fg_color="#81A1C1",
+                hover_color="#6F8CAF",
+                command=lambda: self.open_file_editor(file_key, file_info)
+            )
+        else:
+            action_btn = ctk.CTkButton(
+                content_frame,
+                text="➕ Create",
+                width=80,
+                height=30,
+                corner_radius=6,
+                font=ctk.CTkFont(size=10, weight="bold"),
+                fg_color="#A3BE8C",
+                hover_color="#8FA878",
+                command=lambda: self.create_file_editor(file_key, file_info)
+            )
+        action_btn.pack(side="right", padx=(10, 0))
+        
+    def fade_in_mapping_menu(self):
+        """Create fade-in effect for mapping dropdown menu"""
+        if self.mapping_dropdown_menu and self.mapping_dropdown_menu.winfo_exists():
+            current_alpha = self.mapping_dropdown_menu.attributes('-alpha')
+            if current_alpha < 1.0:
+                new_alpha = min(1.0, current_alpha + 0.1)
+                self.mapping_dropdown_menu.attributes('-alpha', new_alpha)
+                self.root.after(20, self.fade_in_mapping_menu)
+                
+    def hide_mapping_dropdown(self):
+        """Hide the mapping files dropdown menu"""
+        if self.mapping_dropdown_menu:
+            self.mapping_dropdown_menu.destroy()
+            self.mapping_dropdown_menu = None
+            
+        self.mapping_dropdown_btn.configure(
+            text="📝 Mapping Files ▼",
+            fg_color="#5D4E75"
+        )
+        
+        self.mapping_dropdown_visible = False
+        self.root.unbind("<Button-1>")
+        
+    def on_click_outside_mapping_dropdown(self, event):
+        """Handle clicking outside mapping dropdown to close it"""
+        if self.mapping_dropdown_menu and event.widget not in [self.mapping_dropdown_menu, self.mapping_dropdown_btn]:
+            try:
+                dropdown_x = self.mapping_dropdown_menu.winfo_rootx()
+                dropdown_y = self.mapping_dropdown_menu.winfo_rooty()
+                dropdown_width = self.mapping_dropdown_menu.winfo_width()
+                dropdown_height = self.mapping_dropdown_menu.winfo_height()
+                
+                click_x = event.x_root
+                click_y = event.y_root
+                
+                if not (dropdown_x <= click_x <= dropdown_x + dropdown_width and 
+                       dropdown_y <= click_y <= dropdown_y + dropdown_height):
+                    self.hide_mapping_dropdown()
+            except:
+                self.hide_mapping_dropdown()
+                
+    def open_file_editor(self, file_key, file_info):
+        """Open file editor for existing file"""
+        self.hide_mapping_dropdown()
+        if file_key in self.active_forms:
+            # Bring existing form to front
+            self.active_forms[file_key].lift()
+            self.active_forms[file_key].focus()
+            return
+            
+        try:
+            with open(file_info["path"], 'r', encoding='utf-8') as f:
+                content = f.read()
+            self.create_file_form(file_key, file_info, content, is_new=False)
+        except Exception as e:
+            self.log_message(f"❌ Error reading file {file_info['path']}: {str(e)}", "error")
+            
+    def create_file_editor(self, file_key, file_info):
+        """Create new file editor"""
+        self.hide_mapping_dropdown()
+        if file_key in self.active_forms:
+            self.active_forms[file_key].lift()
+            self.active_forms[file_key].focus()
+            return
+            
+        # Create default content based on file type
+        if file_info["type"] == "env":
+            default_content = "# Environment Variables\n# Add your configuration here\n\n"
+        else:  # CSV
+            default_content = "# CSV Mapping File\n# Add your mappings here\n\n"
+            
+        self.create_file_form(file_key, file_info, default_content, is_new=True)
+        
+    def create_file_form(self, file_key, file_info, content, is_new=False):
+        """Create a reactive form for editing files"""
+        # Create form window
+        form_window = ctk.CTkToplevel(self.root)
+        form_window.title(f"Edit {file_info['display_name']}")
+        form_window.geometry("800x600")
+        form_window.minsize(600, 400)
+        
+        # Configure window
+        form_window.configure(fg_color=("#F0F0F0", "#1a1a1a"))
+        self.active_forms[file_key] = form_window
+        
+        # Handle window closing
+        form_window.protocol("WM_DELETE_WINDOW", lambda: self.close_file_form(file_key))
+        
+        # Main container
+        main_container = ctk.CTkFrame(form_window, corner_radius=15)
+        main_container.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Header
+        self.create_form_header(main_container, file_info, is_new)
+        
+        # Content area based on file type
+        if file_info["type"] == "env":
+            self.create_env_editor(main_container, file_key, file_info, content, is_new)
+        elif file_info["type"] == "csv":
+            self.create_csv_editor(main_container, file_key, file_info, content, is_new)
+            
+    def create_form_header(self, parent, file_info, is_new):
+        """Create header for file form"""
+        header_frame = ctk.CTkFrame(parent, height=80, corner_radius=10, fg_color="#3B4252")
+        header_frame.pack(fill="x", padx=10, pady=(10, 15))
+        header_frame.pack_propagate(False)
+        
+        # Title
+        status_text = "Create New" if is_new else "Edit"
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text=f"{file_info['icon']} {status_text} {file_info['display_name']}",
+            font=ctk.CTkFont(size=24, weight="bold"),
+            text_color="#ECEFF4"
+        )
+        title_label.pack(side="left", padx=20, pady=20)
+        
+        # File path info
+        path_label = ctk.CTkLabel(
+            header_frame,
+            text=f"📁 {file_info['path']}",
+            font=ctk.CTkFont(size=12),
+            text_color="#D8DEE9"
+        )
+        path_label.pack(side="right", padx=20, pady=20)
+        
+    def create_env_editor(self, parent, file_key, file_info, content, is_new):
+        """Create environment variables editor"""
+        editor_frame = ctk.CTkFrame(parent, corner_radius=10)
+        editor_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
+        
+        # Instructions
+        inst_frame = ctk.CTkFrame(editor_frame, height=50, corner_radius=8, fg_color="#4C566A")
+        inst_frame.pack(fill="x", padx=15, pady=15)
+        inst_frame.pack_propagate(False)
+        
+        inst_label = ctk.CTkLabel(
+            inst_frame,
+            text="💡 Enter environment variables in KEY=VALUE format, one per line",
+            font=ctk.CTkFont(size=12),
+            text_color="#ECEFF4"
+        )
+        inst_label.pack(pady=15)
+        
+        # Text editor
+        text_frame = ctk.CTkFrame(editor_frame, fg_color="#2E3440")
+        text_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        
+        # Create text widget with syntax highlighting simulation
+        text_widget = tk.Text(
+            text_frame,
+            bg="#2E3440",
+            fg="#D8DEE9",
+            font=("Consolas", 11),
+            wrap=tk.WORD,
+            insertbackground="#88C0D0",
+            selectbackground="#434C5E",
+            selectforeground="#ECEFF4",
+            relief=tk.FLAT,
+            borderwidth=0
+        )
+        
+        # Scrollbar
+        scrollbar = CTkScrollbar(text_frame, command=text_widget.yview)
+        text_widget.config(yscrollcommand=scrollbar.set)
+        
+        text_widget.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        scrollbar.pack(side="right", fill="y", padx=(0, 10), pady=10)
+        
+        # Insert content
+        text_widget.insert("1.0", content)
+        
+        # Store reference for saving
+        setattr(form_window, 'text_widget', text_widget)
+        setattr(form_window, 'file_info', file_info)
+        setattr(form_window, 'is_new', is_new)
+        
+        # Action buttons
+        self.create_form_buttons(editor_frame, file_key, file_info, is_new)
+        
+    def create_csv_editor(self, parent, file_key, file_info, content, is_new):
+        """Create CSV file editor with table-like interface"""
+        editor_frame = ctk.CTkFrame(parent, corner_radius=10)
+        editor_frame.pack(fill="both", expand=True, padx=10, pady=(0, 15))
+        
+        # Instructions
+        inst_frame = ctk.CTkFrame(editor_frame, height=50, corner_radius=8, fg_color="#4C566A")
+        inst_frame.pack(fill="x", padx=15, pady=15)
+        inst_frame.pack_propagate(False)
+        
+        inst_label = ctk.CTkLabel(
+            inst_frame,
+            text="📊 Edit CSV data - Use standard CSV format with commas as separators",
+            font=ctk.CTkFont(size=12),
+            text_color="#ECEFF4"
+        )
+        inst_label.pack(pady=15)
+        
+        # Text editor with CSV-specific styling
+        text_frame = ctk.CTkFrame(editor_frame, fg_color="#2E3440")
+        text_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        
+        text_widget = tk.Text(
+            text_frame,
+            bg="#2E3440",
+            fg="#D8DEE9",
+            font=("Consolas", 11),
+            wrap=tk.NONE,  # No wrap for CSV
+            insertbackground="#88C0D0",
+            selectbackground="#434C5E",
+            selectforeground="#ECEFF4",
+            relief=tk.FLAT,
+            borderwidth=0
+        )
+        
+        # Scrollbars for CSV (both horizontal and vertical)
+        v_scrollbar = CTkScrollbar(text_frame, command=text_widget.yview)
+        h_scrollbar = CTkScrollbar(text_frame, orientation="horizontal", command=text_widget.xview)
+        text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        
+        text_widget.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=(10, 0))
+        v_scrollbar.grid(row=0, column=1, sticky="ns", padx=(0, 10), pady=(10, 0))
+        h_scrollbar.grid(row=1, column=0, sticky="ew", padx=(10, 0), pady=(0, 10))
+        
+        text_frame.grid_rowconfigure(0, weight=1)
+        text_frame.grid_columnconfigure(0, weight=1)
+        
+        # Insert content or default CSV structure
+        if is_new and not content.strip():
+            content = "# CSV Headers (remove this comment line)\ncolumn1,column2,column3\nvalue1,value2,value3\n"
+        text_widget.insert("1.0", content)
+        
+        # Store reference for saving
+        setattr(form_window, 'text_widget', text_widget)
+        setattr(form_window, 'file_info', file_info)
+        setattr(form_window, 'is_new', is_new)
+        
+        # Action buttons
+        self.create_form_buttons(editor_frame, file_key, file_info, is_new)
+        
+    def create_form_buttons(self, parent, file_key, file_info, is_new):
+        """Create action buttons for file forms"""
+        button_frame = ctk.CTkFrame(parent, height=60, corner_radius=8, fg_color="transparent")
+        button_frame.pack(fill="x", padx=15, pady=(0, 15))
+        button_frame.pack_propagate(False)
+        
+        # Left side - info
+        info_frame = ctk.CTkFrame(button_frame, fg_color="transparent")
+        info_frame.pack(side="left", fill="y")
+        
+        status_text = "Creating new file" if is_new else "Editing existing file"
+        status_label = ctk.CTkLabel(
+            info_frame,
+            text=f"📝 {status_text}",
+            font=ctk.CTkFont(size=12),
+            text_color="#5E81AC"
+        )
+        status_label.pack(pady=20)
+        
+        # Right side - buttons
+        btn_frame = ctk.CTkFrame(button_frame, fg_color="transparent")
+        btn_frame.pack(side="right", pady=10)
+        
+        # Cancel button
+        cancel_btn = ctk.CTkButton(
+            btn_frame,
+            text="❌ Cancel",
+            width=100,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#BF616A",
+            hover_color="#A54B5B",
+            command=lambda: self.close_file_form(file_key)
+        )
+        cancel_btn.pack(side="left", padx=5)
+        
+        # Save button
+        save_btn = ctk.CTkButton(
+            btn_frame,
+            text="💾 Save",
+            width=100,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#A3BE8C",
+            hover_color="#8FA878",
+            command=lambda: self.save_file(file_key)
+        )
+        save_btn.pack(side="left", padx=5)
+        
+        # Save & Close button
+        save_close_btn = ctk.CTkButton(
+            btn_frame,
+            text="💾 Save & Close",
+            width=120,
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#5E81AC",
+            hover_color="#4C6B8A",
+            command=lambda: self.save_and_close_file(file_key)
+        )
+        save_close_btn.pack(side="left", padx=5)
+        
+    def save_file(self, file_key):
+        """Save file content"""
+        if file_key not in self.active_forms:
+            return
+            
+        form_window = self.active_forms[file_key]
+        file_info = form_window.file_info
+        text_widget = form_window.text_widget
+        
+        try:
+            # Get content from text widget
+            content = text_widget.get("1.0", tk.END).rstrip()
+            
+            # Create directory if it doesn't exist
+            file_dir = os.path.dirname(file_info["path"])
+            if file_dir and not os.path.exists(file_dir):
+                os.makedirs(file_dir, exist_ok=True)
+                self.log_message(f"📁 Created directory: {file_dir}", "info")
+            
+            # Save file
+            with open(file_info["path"], 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            self.log_message(f"💾 Successfully saved: {file_info['display_name']}", "success")
+            
+            # Update form status
+            form_window.is_new = False
+            
+            # Refresh status indicators
+            self.refresh_folder_status()
+            
+        except Exception as e:
+            self.log_message(f"❌ Error saving {file_info['display_name']}: {str(e)}", "error")
+            
+    def save_and_close_file(self, file_key):
+        """Save file and close form"""
+        self.save_file(file_key)
+        self.close_file_form(file_key)
+        
+    def close_file_form(self, file_key):
+        """Close file form"""
+        if file_key in self.active_forms:
+            self.active_forms[file_key].destroy()
+            del self.active_forms[file_key]
+        """Toggle the archive folders dropdown menu"""
+        if self.dropdown_visible:
+            self.hide_dropdown()
+        else:
+            self.show_dropdown()
+            
+    def show_dropdown(self):
+        """Show the archive folders dropdown menu"""
+        # Close mapping dropdown if open
+        if self.mapping_dropdown_visible:
+            self.hide_mapping_dropdown()
+            
+        if self.archive_dropdown_menu:
+            self.hide_dropdown()
+            
+        # Create dropdown menu
+        dropdown_x = self.archive_dropdown_btn.winfo_rootx()
+        dropdown_y = self.archive_dropdown_btn.winfo_rooty() + self.archive_dropdown_btn.winfo_height() + 5
+        
+        self.archive_dropdown_menu = ctk.CTkToplevel(self.root)
+        self.archive_dropdown_menu.withdraw()  # Hide initially
+        self.archive_dropdown_menu.overrideredirect(True)
+        self.archive_dropdown_menu.configure(fg_color=("#2B2B2B", "#1a1a1a"))
+        
+        # Calculate menu width
+        menu_width = 320
+        menu_height = len(self.archive_folders) * 70 + 80
+        
+        self.archive_dropdown_menu.geometry(f"{menu_width}x{menu_height}+{dropdown_x}+{dropdown_y}")
+        
+        # Menu header
+        header_frame = ctk.CTkFrame(self.archive_dropdown_menu, height=40, corner_radius=0, fg_color="#3B4252")
+        header_frame.pack(fill="x", padx=0, pady=0)
+        header_frame.pack_propagate(False)
+        
+        header_label = ctk.CTkLabel(
+            header_frame,
+            text="📁 Archive Folders",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#ECEFF4"
+        )
+        header_label.pack(pady=10)
+        
+        # Folder items
+        for folder_name, folder_info in self.archive_folders.items():
+            self.create_dropdown_item(self.archive_dropdown_menu, folder_name, folder_info)
+            
+        # Add "Run All" option at the bottom
+        self.create_run_all_item(self.archive_dropdown_menu)
+        
+        # Show menu with fade-in effect
+        self.archive_dropdown_menu.deiconify()
+        self.archive_dropdown_menu.attributes('-alpha', 0.0)
+        self.fade_in_menu()
+        
+        # Update button appearance
+        self.archive_dropdown_btn.configure(
+            text="📁 Archive Folders ▲",
+            fg_color="#434C5E"
+        )
+        
+        self.dropdown_visible = True
+        
+        # Bind click outside to close
+        self.root.bind("<Button-1>", self.on_click_outside_dropdown)
+        
+    def create_dropdown_item(self, parent, folder_name, folder_info):
+        """Create a dropdown menu item for a folder"""
+        folder_exists = self.check_folder_exists(folder_info["path"])
+        
+        item_frame = ctk.CTkFrame(parent, height=60, corner_radius=8, fg_color="transparent")
+        item_frame.pack(fill="x", padx=10, pady=2)
+        item_frame.pack_propagate(False)
+        
+        # Main item button
+        item_btn = ctk.CTkFrame(item_frame, corner_radius=6, fg_color=("#E5E5E5", "#2D2D30"))
+        item_btn.pack(fill="both", expand=True)
+        
+        # Content frame
+        content_frame = ctk.CTkFrame(item_btn, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=15, pady=8)
+        
+        # Left side - folder info
+        left_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        left_frame.pack(side="left", fill="both", expand=True)
+        
+        # Folder name with status icon
+        status_icon = "✅" if folder_exists else "❌"
+        name_label = ctk.CTkLabel(
+            left_frame,
+            text=f"{status_icon} {folder_name}",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            anchor="w",
+            text_color="#2E3440" if folder_exists else "#BF616A"
+        )
+        name_label.pack(fill="x")
+        
+        # Folder description
+        desc_label = ctk.CTkLabel(
+            left_frame,
+            text=folder_info["description"],
+            font=ctk.CTkFont(size=10),
+            anchor="w",
+            text_color="#5E81AC"
+        )
+        desc_label.pack(fill="x")
+        
+        # Right side - action button
+        if folder_exists:
+            action_btn = ctk.CTkButton(
+                content_frame,
+                text="📂 Open",
+                width=70,
+                height=30,
+                corner_radius=6,
+                font=ctk.CTkFont(size=10, weight="bold"),
+                fg_color="#A3BE8C",
+                hover_color="#8FA878",
+                command=lambda: self.open_folder_action(folder_info["path"])
+            )
+        else:
+            action_btn = ctk.CTkButton(
+                content_frame,
+                text="⚠️ Missing",
+                width=80,
+                height=30,
+                corner_radius=6,
+                font=ctk.CTkFont(size=10, weight="bold"),
+                fg_color="#BF616A",
+                hover_color="#A54B5B",
+                command=lambda: self.suggest_run_all(folder_name)
+            )
+        action_btn.pack(side="right", padx=(10, 0))
+        
+    def create_run_all_item(self, parent):
+        """Create the 'Run All' item at the bottom of dropdown"""
+        # Separator
+        separator = ctk.CTkFrame(parent, height=1, fg_color="#444444")
+        separator.pack(fill="x", padx=20, pady=5)
+        
+        # Run All button
+        run_all_frame = ctk.CTkFrame(parent, height=40, corner_radius=8, fg_color="transparent")
+        run_all_frame.pack(fill="x", padx=10, pady=5)
+        run_all_frame.pack_propagate(False)
+        
+        run_all_btn = ctk.CTkButton(
+            run_all_frame,
+            text="⚡ Run All Commands (Creates Missing Folders)",
+            height=35,
+            corner_radius=8,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#FFB347",
+            hover_color="#E5A042",
+            command=self.run_all_from_dropdown
+        )
+        run_all_btn.pack(fill="x", padx=5, pady=2)
+        
+    def open_folder_action(self, folder_path):
+        """Handle opening folder from dropdown"""
+        self.hide_dropdown()
+        self.open_folder_in_explorer(folder_path)
+        
+    def suggest_run_all(self, folder_name):
+        """Suggest running 'all' command when folder is missing"""
+        self.hide_dropdown()
+        self.log_message(f"⚠️ Folder '{folder_name}' does not exist!", "warning")
+        self.log_message("💡 Suggestion: Run the 'ALL' command to create missing folders and build the complete system", "info")
+        self.log_message("🔄 Click the 'ALL' button below or use 'Run All Commands' from Archive Folders menu", "info")
+        
+    def run_all_from_dropdown(self):
+        """Run 'all' command from dropdown menu"""
+        self.hide_dropdown()
+        self.log_message("🚀 Running ALL commands from Archive Folders menu...", "info")
+        self.execute_command("all")
+        
+    def fade_in_menu(self):
+        """Create fade-in effect for dropdown menu"""
+        if self.archive_dropdown_menu and self.archive_dropdown_menu.winfo_exists():
+            current_alpha = self.archive_dropdown_menu.attributes('-alpha')
+            if current_alpha < 1.0:
+                new_alpha = min(1.0, current_alpha + 0.1)
+                self.archive_dropdown_menu.attributes('-alpha', new_alpha)
+                self.root.after(20, self.fade_in_menu)
+                
+    def hide_dropdown(self):
+        """Hide the archive folders dropdown menu"""
+        if self.archive_dropdown_menu:
+            self.archive_dropdown_menu.destroy()
+            self.archive_dropdown_menu = None
+            
+        self.archive_dropdown_btn.configure(
+            text="📁 Archive Folders ▼",
+            fg_color="#3B4252"
+        )
+        
+        self.dropdown_visible = False
+        self.root.unbind("<Button-1>")
+        
+    def on_click_outside_dropdown(self, event):
+        """Handle clicking outside dropdown to close it"""
+        if self.archive_dropdown_menu and event.widget not in [self.archive_dropdown_menu, self.archive_dropdown_btn]:
+            # Check if click was inside dropdown
+            try:
+                dropdown_x = self.archive_dropdown_menu.winfo_rootx()
+                dropdown_y = self.archive_dropdown_menu.winfo_rooty()
+                dropdown_width = self.archive_dropdown_menu.winfo_width()
+                dropdown_height = self.archive_dropdown_menu.winfo_height()
+                
+                click_x = event.x_root
+                click_y = event.y_root
+                
+                if not (dropdown_x <= click_x <= dropdown_x + dropdown_width and 
+                       dropdown_y <= click_y <= dropdown_y + dropdown_height):
+                    self.hide_dropdown()
+            except:
+                self.hide_dropdown()
+                
+        # Also check mapping dropdown
+        if self.mapping_dropdown_menu and event.widget not in [self.mapping_dropdown_menu, self.mapping_dropdown_btn]:
+            try:
+                dropdown_x = self.mapping_dropdown_menu.winfo_rootx()
+                dropdown_y = self.mapping_dropdown_menu.winfo_rooty()
+                dropdown_width = self.mapping_dropdown_menu.winfo_width()
+                dropdown_height = self.mapping_dropdown_menu.winfo_height()
+                
+                click_x = event.x_root
+                click_y = event.y_root
+                
+                if not (dropdown_x <= click_x <= dropdown_x + dropdown_width and 
+                       dropdown_y <= click_y <= dropdown_y + dropdown_height):
+                    self.hide_mapping_dropdown()
+            except:
+                self.hide_mapping_dropdown()
+                
+    def refresh_folder_status(self):
+        """Refresh the folder status indicator"""
+        existing_folders = 0
+        total_folders = len(self.archive_folders)
+        
+        for folder_name, folder_info in self.archive_folders.items():
+            if self.check_folder_exists(folder_info["path"]):
+                existing_folders += 1
+                
+        # Also check mapping files
+        existing_files = 0
+        total_files = len(self.mapping_files)
+        
+        for file_key, file_info in self.mapping_files.items():
+            if os.path.exists(file_info["path"]):
+                existing_files += 1
+                
+        if existing_folders == total_folders and existing_files == total_files:
+            status_text = f"✅ All ready ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_color = "#A3BE8C"
+        elif existing_folders > 0 or existing_files > 0:
+            status_text = f"⚠️ Partial setup ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_color = "#EBCB8B"
+        else:
+            status_text = f"❌ Setup needed ({existing_folders}/{total_folders} folders, {existing_files}/{total_files} files)"
+            status_color = "#BF616A"
+            
+        if hasattr(self, 'folder_status_label'):
+            self.folder_status_label.configure(
+                text=status_text,
+                text_color=status_color
+            )
+        
+        # Log folder status
+        self.log_message(f"📊 System Status: {status_text}", "info")
+        
+    def on_closing(self):
+        """Handle application closing"""
+        # Hide dropdowns if visible
+        if self.dropdown_visible:
+            self.hide_dropdown()
+        if self.mapping_dropdown_visible:
+            self.hide_mapping_dropdown()
+
+        # Close all active forms
+        for file_key in list(self.active_forms.keys()):
+            self.close_file_form(file_key)
+
+        # Stop all running processes
+        self.process_manager.cleanup_all()
+
+        # Clear running commands
+        self.running_commands.clear()
+
+        # Destroy the window
+        self.root.destroy()
+
+    def on_click_outside_mapping_dropdown(self, event):
+        """Hide mapping dropdown if clicked outside of it"""
+        try:
+            dropdown_x = self.archive_dropdown_menu.winfo_rootx()
+            dropdown_y = self.archive_dropdown_menu.winfo_rooty()
+            dropdown_width = self.archive_dropdown_menu.winfo_width()
+            dropdown_height = self.archive_dropdown_menu.winfo_height()
+
+            click_x = event.x_root
+            click_y = event.y_root
+
+            if not (dropdown_x <= click_x <= dropdown_x + dropdown_width and 
+                    dropdown_y <= click_y <= dropdown_y + dropdown_height):
+                self.hide_mapping_dropdown()
+        except Exception:
+            self.hide_mapping_dropdown()
+
+                
+    def refresh_folder_status(self):
+        """Refresh the folder status indicator"""
+        existing_folders = 0
+        total_folders = len(self.archive_folders)
+        
+        for folder_name, folder_info in self.archive_folders.items():
+            if self.check_folder_exists(folder_info["path"]):
+                existing_folders += 1
+                
+        if existing_folders == total_folders:
+            status_text = f"✅ All folders ready ({existing_folders}/{total_folders})"
+            status_color = "#A3BE8C"
+        elif existing_folders > 0:
+            status_text = f"⚠️ Some folders missing ({existing_folders}/{total_folders})"
+            status_color = "#EBCB8B"
+        else:
+            status_text = f"❌ No folders found ({existing_folders}/{total_folders})"
+            status_color = "#BF616A"
+            
+        self.folder_status_label.configure(
+            text=status_text,
+            text_color=status_color
+        )
+        
+        # Log folder status
+        self.log_message(f"📊 Folder Status: {status_text}", "info")
         
     def create_command_section(self, parent):
         """Create the command buttons section"""
@@ -255,7 +1237,7 @@ class ModernCommandGUI:
             # Stop button (initially hidden)
             stop_btn = ctk.CTkButton(
                 button_row,
-                text="Stop",  # Ctrl+C symbol
+                text="Stop",
                 width=50,
                 height=50,
                 corner_radius=8,
@@ -280,6 +1262,7 @@ class ModernCommandGUI:
         # Configure grid weights for responsive design
         for i in range(3):
             button_container.grid_columnconfigure(i, weight=1)
+            
     def on_mouse_wheel(self, event):
         if event.delta != 0:
             direction = "down" if event.delta < 0 else "up"
@@ -290,97 +1273,93 @@ class ModernCommandGUI:
         # This ensures the scrollbar gets updated smoothly while dragging
         self.console_text.yview_scroll(event.delta, "units")
 
- 
-
-
-
     def create_console_section(self, parent):
-            """Create the console output section"""
-            console_frame = ctk.CTkFrame(parent, corner_radius=10)
-            console_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        
-            # Console header
-            console_header = ctk.CTkFrame(console_frame, height=40, corner_radius=8)
-            console_header.pack(fill="x", padx=10, pady=(10, 5))
-            console_header.pack_propagate(False)
-        
-            console_title = ctk.CTkLabel(
-                console_header,
-                text="💻 Console Output",
-                font=ctk.CTkFont(size=16, weight="bold")
-            )
-            console_title.pack(side="left", padx=15, pady=10)
-        
-            # Control buttons
-            button_frame = ctk.CTkFrame(console_header, fg_color="transparent")
-            button_frame.pack(side="right", padx=15, pady=7)
-        
-            # Auto-scroll toggle
-            self.auto_scroll_var = tk.BooleanVar(value=True)
-            auto_scroll_check = ctk.CTkCheckBox(
-                button_frame,
-                text="Auto-scroll",
-                variable=self.auto_scroll_var,
-                width=80,
-                height=25,
-                font=ctk.CTkFont(size=12)
-            )
-            auto_scroll_check.pack(side="left", padx=5)
-        
-            # Keyboard shortcut label
-            shortcut_label = ctk.CTkLabel(
-                button_frame,
-                text="⌃C to stop",
-                font=ctk.CTkFont(size=10),
-                text_color="#888888"
-            )
-            shortcut_label.pack(side="left", padx=5)
-        
-            # Clear button
-            clear_btn = ctk.CTkButton(
-                button_frame,
-                text="🗑️ Clear",
-                width=80,
-                height=25,
-                font=ctk.CTkFont(size=12),
-                command=self.clear_console
-            )
-            clear_btn.pack(side="left", padx=5)
-        
-            # Console text area with custom styling
-            console_container = ctk.CTkFrame(console_frame, fg_color="#1a1a1a")
-            console_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        
-            self.console_text = tk.Text(
-                console_container,
-                bg="#0d1117",
-                fg="#c9d1d9",
-                font=("Consolas", 10),  # Slightly smaller font for performance
-                wrap=tk.WORD,
-                state=tk.DISABLED,
-                cursor="arrow",
-                selectbackground="#264f78",
-                selectforeground="#ffffff",
-                insertbackground="#c9d1d9"
-            )
-        
-            # Scrollbar for console - NOW console_container is defined
-            scrollbar = CTkScrollbar(console_container, command=self.console_text.yview)
-            self.console_text.config(yscrollcommand=scrollbar.set)
-        
-            # Bind mouse events - AFTER console_text is created
-            self.console_text.bind_all("<MouseWheel>", self.on_mouse_wheel)
-            self.console_text.bind("<B1-Motion>", self.on_scrollbar_drag)
-        
-            self.console_text.pack(side="left", fill="both", expand=True, padx=5, pady=5)
-            scrollbar.pack(side="right", fill="y", padx=(0, 5), pady=5)
-        
-            # Configure text tags for colored output
-            self.console_text.tag_configure("info", foreground="#58a6ff")
-            self.console_text.tag_configure("success", foreground="#3fb950")
-            self.console_text.tag_configure("warning", foreground="#d29922")
-            self.console_text.tag_configure("error", foreground="#f85149")
-            self.console_text.tag_configure("timestamp", foreground="#8b949e")
+        """Create the console output section"""
+        console_frame = ctk.CTkFrame(parent, corner_radius=10)
+        console_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+    
+        # Console header
+        console_header = ctk.CTkFrame(console_frame, height=40, corner_radius=8)
+        console_header.pack(fill="x", padx=10, pady=(10, 5))
+        console_header.pack_propagate(False)
+    
+        console_title = ctk.CTkLabel(
+            console_header,
+            text="💻 Console Output",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        console_title.pack(side="left", padx=15, pady=10)
+    
+        # Control buttons
+        button_frame = ctk.CTkFrame(console_header, fg_color="transparent")
+        button_frame.pack(side="right", padx=15, pady=7)
+    
+        # Auto-scroll toggle
+        self.auto_scroll_var = tk.BooleanVar(value=True)
+        auto_scroll_check = ctk.CTkCheckBox(
+            button_frame,
+            text="Auto-scroll",
+            variable=self.auto_scroll_var,
+            width=80,
+            height=25,
+            font=ctk.CTkFont(size=12)
+        )
+        auto_scroll_check.pack(side="left", padx=5)
+    
+        # Keyboard shortcut label
+        shortcut_label = ctk.CTkLabel(
+            button_frame,
+            text="⌃C to stop",
+            font=ctk.CTkFont(size=10),
+            text_color="#888888"
+        )
+        shortcut_label.pack(side="left", padx=5)
+    
+        # Clear button
+        clear_btn = ctk.CTkButton(
+            button_frame,
+            text="🗑️ Clear",
+            width=80,
+            height=25,
+            font=ctk.CTkFont(size=12),
+            command=self.clear_console
+        )
+        clear_btn.pack(side="left", padx=5)
+    
+        # Console text area with custom styling
+        console_container = ctk.CTkFrame(console_frame, fg_color="#1a1a1a")
+        console_container.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+    
+        self.console_text = tk.Text(
+            console_container,
+            bg="#0d1117",
+            fg="#c9d1d9",
+            font=("Consolas", 10),
+            wrap=tk.WORD,
+            state=tk.DISABLED,
+            cursor="arrow",
+            selectbackground="#264f78",
+            selectforeground="#ffffff",
+            insertbackground="#c9d1d9"
+        )
+    
+        # Scrollbar for console
+        scrollbar = CTkScrollbar(console_container, command=self.console_text.yview)
+        self.console_text.config(yscrollcommand=scrollbar.set)
+    
+        # Bind mouse events
+        self.console_text.bind_all("<MouseWheel>", self.on_mouse_wheel)
+        self.console_text.bind("<B1-Motion>", self.on_scrollbar_drag)
+    
+        self.console_text.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        scrollbar.pack(side="right", fill="y", padx=(0, 5), pady=5)
+    
+        # Configure text tags for colored output
+        self.console_text.tag_configure("info", foreground="#58a6ff")
+        self.console_text.tag_configure("success", foreground="#3fb950")
+        self.console_text.tag_configure("warning", foreground="#d29922")
+        self.console_text.tag_configure("error", foreground="#f85149")
+        self.console_text.tag_configure("timestamp", foreground="#8b949e")
         
     def create_status_bar(self, parent):
         """Create the status bar"""
@@ -521,6 +1500,8 @@ class ModernCommandGUI:
                 
                 if return_code == 0:
                     self.output_queue.put(("success", f"✅ Command '{command}' completed successfully"))
+                    # Refresh folder status after successful command completion
+                    self.root.after(1000, self.refresh_folder_status)
                 else:
                     self.output_queue.put(("error", f"❌ Command '{command}' failed with code {return_code}"))
                     
@@ -533,8 +1514,7 @@ class ModernCommandGUI:
             self.output_queue.put(("finish", command))
             
     def _simulate_command(self, command):
-        
-
+        """Simulate command execution for testing"""
         messages = [
             f"Initializing {command} module...",
             f"Loading configuration for {command}...",
@@ -547,7 +1527,7 @@ class ModernCommandGUI:
         # Simulate intensive processing with periodic output
         for i in range(50):  # Simulate more intensive task
             if i % 10 == 0 and i < len(messages):
-                self.output_queue.put(("output", f"[{command.upper()}] {messages[i//100000]}"))
+                self.output_queue.put(("output", f"[{command.upper()}] {messages[i//10]}"))
             
             # Simulate work
             time.sleep(0.1)
@@ -562,6 +1542,17 @@ class ModernCommandGUI:
                 progress = int((i / 50) * 100)
                 self.output_queue.put(("output", f"[{command.upper()}] Progress: {progress}%"))
         
+        # Simulate folder creation for 'all' command
+        if command == "all":
+            for folder_name, folder_info in self.archive_folders.items():
+                self.output_queue.put(("output", f"[ALL] Creating folder: {folder_info['path']}"))
+                # Simulate creating the folder
+                try:
+                    os.makedirs(folder_info["path"], exist_ok=True)
+                    self.output_queue.put(("success", f"[ALL] ✅ Created folder: {folder_info['path']}"))
+                except Exception as e:
+                    self.output_queue.put(("error", f"[ALL] ❌ Failed to create folder {folder_info['path']}: {str(e)}"))
+        
         # Simulate success/failure
         if random.random() > 0.2:  # 80% success rate
             self.output_queue.put(("success", f"✅ Command '{command}' simulation completed successfully"))
@@ -575,7 +1566,7 @@ class ModernCommandGUI:
     def check_output_queue(self):
         """Check for new output messages with batching"""
         messages_processed = 0
-        max_messages_per_update = 2000  # Limit messages per GUI update
+        max_messages_per_update = 500  # Limit messages per GUI update
         
         try:
             while messages_processed < max_messages_per_update:
@@ -606,11 +1597,13 @@ class ModernCommandGUI:
             
         # Schedule next check with adaptive timing
         delay = 10 if self.running_commands else 50
-		
         self.root.after(delay, self.check_output_queue)
     
     def log_message_batch(self, message, msg_type="info"):
         """Add message to batch without immediately updating GUI"""
+        if self.console_text is None:
+            return
+            
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console_buffer.append({
             "timestamp": timestamp,
@@ -620,7 +1613,7 @@ class ModernCommandGUI:
     
     def flush_console_batch(self):
         """Flush batched messages to console"""
-        if not self.console_buffer:
+        if not self.console_buffer or self.console_text is None:
             return
 
         self.console_text.config(state=tk.NORMAL)
@@ -651,7 +1644,7 @@ class ModernCommandGUI:
         self.console_text.config(state=tk.DISABLED)
 
         # Auto-scroll if enabled, and smoothly update the scrollbar position
-        if self.auto_scroll_var.get():
+        if self.auto_scroll_var and self.auto_scroll_var.get():
             self.console_text.see(tk.END)  # This ensures auto-scroll is smooth
 
         # Clear the buffer after flush
@@ -660,6 +1653,15 @@ class ModernCommandGUI:
         
     def log_message(self, message, msg_type="info"):
         """Log a message to the console (single message)"""
+        if self.console_text is None:
+            # Store in buffer if console not ready yet
+            self.console_buffer.append({
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "message": message,
+                "type": msg_type
+            })
+            return
+            
         timestamp = datetime.now().strftime("%H:%M:%S")
         
         self.console_text.config(state=tk.NORMAL)
@@ -682,7 +1684,7 @@ class ModernCommandGUI:
         self.console_text.config(state=tk.DISABLED)
         
         # Auto-scroll if enabled
-        if self.auto_scroll_var.get():
+        if self.auto_scroll_var and self.auto_scroll_var.get():
             self.console_text.see(tk.END)
         
         # Update command history (limited)
@@ -697,6 +1699,9 @@ class ModernCommandGUI:
         
     def clear_console(self):
         """Clear the console output"""
+        if self.console_text is None:
+            return
+            
         self.console_text.config(state=tk.NORMAL)
         self.console_text.delete(1.0, tk.END)
         self.console_text.config(state=tk.DISABLED)
@@ -718,6 +1723,10 @@ class ModernCommandGUI:
     
     def on_closing(self):
         """Handle application closing"""
+        # Hide dropdown if visible
+        if self.dropdown_visible:
+            self.hide_dropdown()
+            
         # Stop all running processes
         self.process_manager.cleanup_all()
         
@@ -729,11 +1738,18 @@ class ModernCommandGUI:
         
     def run(self):
         """Start the GUI application"""
+        # Wait for UI to be fully initialized
+        self.root.update_idletasks()
+        
+        # Now that console is ready, flush any buffered messages
+        if self.console_buffer and self.console_text:
+            self.flush_console_batch()
+            
         self.log_message("🎉 Shadow Command Center initialized", "success")
+        self.log_message("📁 Archive folder status checked - see navigation bar", "info")
         self.log_message("Click any command button to execute", "info")
         
         # Center window on screen
-        self.root.update_idletasks()
         x = (self.root.winfo_screenwidth() // 2) - (self.root.winfo_width() // 2)
         y = (self.root.winfo_screenheight() // 2) - (self.root.winfo_height() // 2)
         self.root.geometry(f"+{x}+{y}")
