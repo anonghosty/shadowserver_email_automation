@@ -21,6 +21,7 @@ import csv
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
+
 class AsyncConsoleRedirector:
     """Thread-safe console redirector with buffering"""
     def __init__(self, output_queue, max_buffer=1000):
@@ -1984,6 +1985,7 @@ class ModernCommandGUI:
         """Start the GUI application"""
         # Wait for UI to be fully initialized
         self.root.update_idletasks()
+		
         
         # Now that console is ready, flush any buffered messages
         if self.console_buffer and self.console_text:
