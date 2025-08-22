@@ -275,36 +275,59 @@ class ModernCommandGUI:
         nav_frame = ctk.CTkFrame(parent, height=60, corner_radius=10, fg_color=("#2B2B2B", "#1a1a1a"))
         nav_frame.pack(fill="x", padx=10, pady=(0, 15))
         nav_frame.pack_propagate(False)
-        
+
         # Navigation container
         nav_container = ctk.CTkFrame(nav_frame, fg_color="transparent")
         nav_container.pack(fill="both", expand=True, padx=15, pady=8)
-        
+
         # Archive Folders Dropdown
         self.create_archive_dropdown(nav_container)
-        
+
         # Add separator
         separator = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
         separator.pack(side="left", padx=15, pady=5)
-        
+
         # Mapping Files Dropdown
         self.create_mapping_dropdown(nav_container)
-        
+
         # Add separator
         separator2 = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
         separator2.pack(side="left", padx=15, pady=5)
-        
+
+        # Report Generation dropdown
+        report_options = {
+            "Get Shadowserver Report Types": "get_shadowserver_report_types.py",
+            "Generate Statistics Reported": "generate_statistics_reported_from_shadowserver_unverified.py",
+            "Generate Malicious Reports": "generate_reported_malicious_communication_reports_old.py"
+        }
+
+        self.report_dropdown = ctk.CTkOptionMenu(
+            nav_container,
+            values=list(report_options.keys()),
+            command=lambda choice: self.open_script_runner(report_options[choice], choice),
+            width=180,              # wider for better look
+            height=40,              # taller for better click area
+            corner_radius=8,        # rounded corners
+            font=ctk.CTkFont(size=14, weight="bold"),  # larger, bold font
+            fg_color="#3B4252",     # dark slate background
+        )
+        self.report_dropdown.set("📄 Report Generation")
+        self.report_dropdown.pack(side="left", padx=(10, 0))
+        # Add separator
+        separator3 = ctk.CTkFrame(nav_container, width=2, height=40, fg_color="#444444")
+        separator3.pack(side="left", padx=15, pady=5)
+
         # Folder status indicator
         self.create_folder_status_indicator(nav_container)
-        
+
         # Refresh folders button
         refresh_btn = ctk.CTkButton(
             nav_container,
             text="🔄 Refresh",
-            width=100,
-            height=35,
+            width=80,  # reduced width
+            height=30, # reduced height
             corner_radius=8,
-            font=ctk.CTkFont(size=12, weight="bold"),
+            font=ctk.CTkFont(size=11, weight="bold"),
             fg_color="#4ECDC4",
             hover_color="#45B7A8",
             command=self.refresh_folder_status
@@ -314,16 +337,70 @@ class ModernCommandGUI:
         # Resource Monitor button
         resource_monitor_btn = ctk.CTkButton(
             nav_container,
-            text="🧠 Resource Monitor",
-            width=160,
-            height=35,
+            text="🧠 Resources",
+            width=80,  # reduced width
+            height=30,  # reduced height
             corner_radius=8,
-            font=ctk.CTkFont(size=12, weight="bold"),
+            font=ctk.CTkFont(size=11, weight="bold"),
             fg_color="#6A82FB",
             hover_color="#576CDF",
             command=self.open_resource_monitor
         )
         resource_monitor_btn.pack(side="right", padx=(10, 0))
+
+
+    def open_script_runner(self, script_path, display_name):
+        if not os.path.isfile(script_path):
+            print(f"Script not found: {script_path}")
+            return
+
+        runner_window = ctk.CTkToplevel()
+        runner_window.title(f"{display_name}")
+        runner_window.geometry("700x400")
+
+        textbox = ctk.CTkTextbox(runner_window, wrap="word")
+        textbox.pack(expand=True, fill="both", padx=10, pady=10)
+        textbox.insert("end", f"▶️ Running: {display_name}\n\n")
+        textbox.configure(state="disabled")
+
+        def append_line_safe(line):
+            textbox.configure(state="normal")
+            textbox.insert("end", line)
+            textbox.see("end")
+            textbox.configure(state="disabled")
+
+        def run_script():
+            try:
+                process = subprocess.Popen(
+                    [sys.executable, script_path],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1
+                )
+
+                for line in iter(process.stdout.readline, ''):
+                    runner_window.after(0, append_line_safe, line)
+
+                process.stdout.close()
+                process.wait()
+
+                runner_window.after(0, append_line_safe, "\n\n✅ Done. Closing in 10 seconds...")
+
+                def delayed_close():
+                    time.sleep(10)
+                    if runner_window.winfo_exists():
+                        runner_window.destroy()
+
+                threading.Thread(target=delayed_close, daemon=True).start()
+
+            except Exception as e:
+                runner_window.after(0, append_line_safe, f"\n❌ Error: {e}")
+
+        threading.Thread(target=run_script, daemon=True).start()
+
+
+
 
 
     def open_resource_monitor(self):
