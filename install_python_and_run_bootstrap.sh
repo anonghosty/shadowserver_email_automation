@@ -2,8 +2,6 @@
 
 set -e
 
-#!/bin/bash
-
 # Step 1: Get absolute path to ingestion_gui.py
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYTHON_SCRIPT="$SCRIPT_DIR/ingestion_gui.py"
@@ -63,7 +61,7 @@ echo "✅ Binary installed. You can now run: shadow_command_center"
 
 # Step 6: Create .desktop entry
 DESKTOP_FILE="$HOME/.local/share/applications/shadow-command-center.desktop"
-ICON_SOURCE="$SCRIPT_DIR/shadow-icon.png"
+ICON_SOURCE="$SCRIPT_DIR/logo.png"   # Updated icon file to logo.png
 ICON_DEST="$HOME/.local/share/icons/shadow-command-center.png"
 
 echo "📁 Creating desktop entry at: $DESKTOP_FILE"
@@ -99,7 +97,6 @@ fi
 
 echo "✅ Desktop entry installed. You can now search for 'Shadow Command Center' in your app menu. Installation Processes Continue"
 
-
 echo "🔍 Checking for Python 3..."
 if ! command -v python3 &> /dev/null; then
   echo "📦 Installing python3..."
@@ -119,5 +116,3 @@ fi
 
 echo "🚀 Running Python bootstrap script..."
 python3 bootstrap_shadowserver_environment.py
-
-
