@@ -47,6 +47,7 @@ if not requirements_path.exists():
         "async-lru",
         "beautifulsoup4",
         "bs4",
+        "dearpygui",
         "colorama",
         "pandas",
         "pymongo",
@@ -157,6 +158,7 @@ finally:
 
 
 print("\n🎉 All dependencies are installed. Environment setup complete.")
+
 
 
 
