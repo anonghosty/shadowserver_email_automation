@@ -301,7 +301,7 @@ class ModernCommandGUI:
         report_options = {
             "Get Shadowserver Report Types": "get_shadowserver_report_types.py",
             "Generate Statistics Reported": "generate_statistics_reported_from_shadowserver_unverified.py",
-            "Generate Malicious Reports": "generate_reported_malicious_communication_reports_old.py"
+            "Generate Malicious Reports": "generate_reported_malicious_communication_reports.py"
         }
 
         self.report_dropdown = ctk.CTkOptionMenu(
