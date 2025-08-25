@@ -168,6 +168,7 @@ class ShadowCommandCenter:
         
         # Form windows
         self.active_forms = {}
+        self.form_data = {}  
         
         # Available commands
         self.commands = {
@@ -740,9 +741,9 @@ class ShadowCommandCenter:
 
     def create_env_editor_form(self, file_key, file_info, content, is_new):
         """Create environment variables editor form"""
-        dpg.add_text(" Enter environment variables as key-value pairs")
+        dpg.add_text("🔧 Enter environment variables as key-value pairs")
         dpg.add_separator()
-        
+    
         # Parse content into key-value pairs
         env_vars = {}
         for line in content.splitlines():
@@ -750,97 +751,135 @@ class ShadowCommandCenter:
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
                 env_vars[k.strip()] = v.strip()
-        
-        # Create table for env vars
-        with dpg.table(tag=f"env_table_{file_key}", header_row=True, 
-                      borders_innerH=True, borders_outerH=True, 
-                      borders_innerV=True, borders_outerV=True):
-            dpg.add_table_column(label="Key", width_fixed=True, init_width_or_weight=200)
-            dpg.add_table_column(label="Value", width_fixed=True, init_width_or_weight=400)
-            dpg.add_table_column(label="Actions", width_fixed=True, init_width_or_weight=100)
+    
+        # If no variables found, add a default one for new files
+        if not env_vars and is_new:
+            env_vars = {"EXAMPLE_KEY": "example_value"}
+    
+        # Store initial data
+        self.form_data[file_key] = {
+            "type": "env",
+            "data": env_vars.copy(),
+            "row_count": 0
+        }
+    
+        # Create scrollable area for the table
+        with dpg.child_window(height=300, width=-1):
+            with dpg.table(tag=f"env_table_{file_key}", header_row=True, 
+                          borders_innerH=True, borders_outerH=True, 
+                          borders_innerV=True, borders_outerV=True):
+                dpg.add_table_column(label="Key", width_fixed=True, init_width_or_weight=200)
+                dpg.add_table_column(label="Value", width_fixed=True, init_width_or_weight=400)
+                dpg.add_table_column(label="Actions", width_fixed=True, init_width_or_weight=80)
             
-            # Add existing env vars
-            for i, (key, value) in enumerate(env_vars.items()):
-                with dpg.table_row():
-                    dpg.add_input_text(tag=f"env_key_{file_key}_{i}", default_value=key, width=180)
-                    dpg.add_input_text(tag=f"env_val_{file_key}_{i}", default_value=value, width=380)
+                # Add existing env vars
+                for i, (key, value) in enumerate(env_vars.items()):
+                    with dpg.table_row(tag=f"env_row_{file_key}_{i}"):
+                        dpg.add_input_text(tag=f"env_key_{file_key}_{i}", default_value=key, width=180)
+                        dpg.add_input_text(tag=f"env_val_{file_key}_{i}", default_value=value, width=380)
                     
-                    # Create proper closure for remove button
-                    def make_remove_callback(fk, row):
-                        return lambda s, a: self.remove_env_row(fk, row)
+                        # Remove button
+                        def make_remove_callback(fk, row):
+                            return lambda s, a: self.remove_env_row(fk, row)
                     
-                    dpg.add_button(label="", callback=make_remove_callback(file_key, i))
-        
+                        dpg.add_button(label="❌", callback=make_remove_callback(file_key, i), width=60)
+                
+                    self.form_data[file_key]["row_count"] = i + 1
+    
         # Add new variable button
         dpg.add_spacer(height=10)
-        
-        # Create proper closure for add button
+    
         def make_add_callback(fk):
             return lambda s, a: self.add_env_row(fk)
-        
-        dpg.add_button(label=" Add Variable", callback=make_add_callback(file_key))
+    
+        dpg.add_button(label="➕ Add Variable", callback=make_add_callback(file_key))
 
+	
     def create_csv_editor_form(self, file_key, file_info, content, is_new):
         """Create CSV editor form"""
-        dpg.add_text(" Edit CSV data in grid format")
+        dpg.add_text("📊 Edit CSV data in grid format")
         dpg.add_separator()
-        
+    
         # Parse CSV content
         try:
-            csv_reader = csv.reader(io.StringIO(content))
-            rows = list(csv_reader)
-        except:
-            rows = []
+            # Remove comment lines before parsing
+            clean_lines = []
+            for line in content.splitlines():
+                if not line.strip().startswith("#"):
+                    clean_lines.append(line)
+            clean_content = "\n".join(clean_lines)
         
+            if clean_content.strip():
+                csv_reader = csv.reader(io.StringIO(clean_content))
+                rows = list(csv_reader)
+            else:
+                rows = []
+        except Exception as e:
+            self.log_message(f"Error parsing CSV: {str(e)}", "warning")
+            rows = []
+    
         # If empty, provide default structure
         if not rows and is_new:
             rows = [
                 ["column1", "column2", "column3"],
                 ["value1", "value2", "value3"]
             ]
-        
-        if rows:
+    
+        # Ensure we have at least something to work with
+        if not rows:
+            rows = [["column1"], [""]]
+    
+        # Store initial data
+        self.form_data[file_key] = {
+            "type": "csv",
+            "data": [row[:] for row in rows],  # Deep copy
+            "rows": len(rows),
+            "cols": len(rows[0]) if rows else 1
+        }
+    
+        # Create scrollable area for the table
+        with dpg.child_window(height=300, width=-1):
             with dpg.table(tag=f"csv_table_{file_key}", header_row=True,
                           borders_innerH=True, borders_outerH=True,
                           borders_innerV=True, borders_outerV=True):
-                
-                # Create columns based on first row
+            
+                # Create columns
                 for i in range(len(rows[0]) if rows else 3):
                     dpg.add_table_column(label=f"Col {i+1}", width_fixed=True, init_width_or_weight=120)
-                
+            
                 # Add data rows
                 for row_idx, row in enumerate(rows):
-                    with dpg.table_row():
+                    with dpg.table_row(tag=f"csv_row_{file_key}_{row_idx}"):
                         for col_idx, cell in enumerate(row):
                             dpg.add_input_text(
                                 tag=f"csv_cell_{file_key}_{row_idx}_{col_idx}",
-                                default_value=cell,
+                                default_value=str(cell),
                                 width=100
                             )
-        
+    
         # CSV manipulation buttons
         dpg.add_spacer(height=10)
         with dpg.group(horizontal=True):
-            # Create proper closures for all CSV manipulation buttons
             def make_add_row_callback(fk):
                 return lambda s, a: self.add_csv_row(fk)
-            
+        
             def make_add_col_callback(fk):
                 return lambda s, a: self.add_csv_column(fk)
-            
+        
             def make_remove_row_callback(fk):
                 return lambda s, a: self.remove_csv_row(fk)
-            
+        
             def make_remove_col_callback(fk):
                 return lambda s, a: self.remove_csv_column(fk)
-            
-            dpg.add_button(label=" Add Row", callback=make_add_row_callback(file_key))
+        
+            dpg.add_button(label="➕ Add Row", callback=make_add_row_callback(file_key))
             dpg.add_spacer(width=10)
-            dpg.add_button(label=" Add Column", callback=make_add_col_callback(file_key))
+            dpg.add_button(label="➕ Add Column", callback=make_add_col_callback(file_key))
             dpg.add_spacer(width=10)
-            dpg.add_button(label=" Remove Row", callback=make_remove_row_callback(file_key))
+            dpg.add_button(label="❌ Remove Row", callback=make_remove_row_callback(file_key))
             dpg.add_spacer(width=10)
-            dpg.add_button(label=" Remove Column", callback=make_remove_col_callback(file_key))
+            dpg.add_button(label="❌ Remove Column", callback=make_remove_col_callback(file_key))
+
 
     def add_env_row(self, file_key):
         """Add new environment variable row"""
@@ -848,25 +887,97 @@ class ShadowCommandCenter:
         # For now, show a message
         self.log_message("Adding new environment variable row", "info")
 
+        # Replace the remove_env_row method
     def remove_env_row(self, file_key, row_idx):
         """Remove environment variable row"""
-        self.log_message(f"Removing environment variable row {row_idx}", "info")
+        try:
+            # Remove the table row
+            dpg.delete_item(f"env_row_{file_key}_{row_idx}")
+            self.log_message(f"Removed environment variable row {row_idx}", "info")
+        except Exception as e:
+            self.log_message(f"Error removing row: {str(e)}", "error")
+
 
     def add_csv_row(self, file_key):
         """Add new CSV row"""
-        self.log_message("Adding new CSV row", "info")
+        if file_key not in self.form_data:
+            return
+    
+        form_data = self.form_data[file_key]
+        row_idx = form_data["rows"]
+        cols = form_data["cols"]
+    
+        # Add to table
+        with dpg.table_row(tag=f"csv_row_{file_key}_{row_idx}", parent=f"csv_table_{file_key}"):
+            for col_idx in range(cols):
+                dpg.add_input_text(
+                    tag=f"csv_cell_{file_key}_{row_idx}_{col_idx}",
+                    default_value="",
+                    width=100
+                )
+    
+        form_data["rows"] += 1
+        self.log_message("Added new CSV row", "info")
 
+
+    # Replace the add_csv_column method
     def add_csv_column(self, file_key):
         """Add new CSV column"""
-        self.log_message("Adding new CSV column", "info")
+        if file_key not in self.form_data:
+            return
+    
+        form_data = self.form_data[file_key]
+        col_idx = form_data["cols"]
+    
+        # Add column to table
+        dpg.add_table_column(label=f"Col {col_idx+1}", width_fixed=True, init_width_or_weight=120, parent=f"csv_table_{file_key}")
+    
+        # Add cells for existing rows
+        for row_idx in range(form_data["rows"]):
+            try:
+                # This is tricky with Dear PyGui - we'd need to recreate the table
+                # For now, just log the action
+                pass
+            except:
+                pass
+    
+        form_data["cols"] += 1
+        self.log_message("Adding CSV column - please save and reopen to see changes", "warning")
 
+
+    # Replace the remove_csv_row method
     def remove_csv_row(self, file_key):
-        """Remove CSV row"""
-        self.log_message("Removing CSV row", "info")
+        """Remove last CSV row"""
+        if file_key not in self.form_data:
+            return
+    
+        form_data = self.form_data[file_key]
+        if form_data["rows"] <= 1:
+            self.log_message("Cannot remove the last row", "warning")
+            return
+    
+        last_row = form_data["rows"] - 1
+        try:
+            dpg.delete_item(f"csv_row_{file_key}_{last_row}")
+            form_data["rows"] -= 1
+            self.log_message(f"Removed CSV row {last_row}", "info")
+        except Exception as e:
+            self.log_message(f"Error removing row: {str(e)}", "error")
 
+
+    # Replace the remove_csv_column method
     def remove_csv_column(self, file_key):
         """Remove CSV column"""
-        self.log_message("Removing CSV column", "info")
+        if file_key not in self.form_data:
+            return
+    
+        form_data = self.form_data[file_key]
+        if form_data["cols"] <= 1:
+            self.log_message("Cannot remove the last column", "warning")
+            return
+    
+        self.log_message("Removing CSV column - please save and reopen to see changes", "warning")
+
 
     def save_file(self, file_key):
         """Save file content"""
@@ -908,29 +1019,84 @@ class ShadowCommandCenter:
         except Exception as e:
             self.log_message(f"ā Error saving {file_info['display_name']}: {str(e)}", "error")
 
+    # Replace the collect_env_content method
     def collect_env_content(self, file_key):
         """Collect environment variables content from form"""
-        # This would collect from the dynamic table
-        # For now, return placeholder
-        return "# Environment variables would be collected here\n"
+        content_lines = ["# Environment Variables", "# Generated by Shadow Command Center", ""]
+    
+        if file_key not in self.form_data:
+            return "\n".join(content_lines)
+    
+        form_data = self.form_data[file_key]
+    
+        # Collect all key-value pairs from the form
+        for i in range(form_data["row_count"]):
+            try:
+                key_widget = f"env_key_{file_key}_{i}"
+                val_widget = f"env_val_{file_key}_{i}"
+            
+                if dpg.does_item_exist(key_widget) and dpg.does_item_exist(val_widget):
+                    key = dpg.get_value(key_widget).strip()
+                    value = dpg.get_value(val_widget).strip()
+                
+                    if key:  # Only add if key is not empty
+                        content_lines.append(f"{key}={value}")
+            except Exception as e:
+                self.log_message(f"Error collecting env var {i}: {str(e)}", "warning")
+                continue
+    
+        return "\n".join(content_lines)
 
     def collect_csv_content(self, file_key):
         """Collect CSV content from form"""
-        # This would collect from the dynamic table
-        # For now, return placeholder
-        return "column1,column2,column3\nvalue1,value2,value3\n"
+        if file_key not in self.form_data:
+            return "column1,column2,column3\nvalue1,value2,value3\n"
+    
+        form_data = self.form_data[file_key]
+        rows_data = []
+    
+        # Collect all cells from the form
+        for row_idx in range(form_data["rows"]):
+            row_data = []
+            for col_idx in range(form_data["cols"]):
+                try:
+                    cell_widget = f"csv_cell_{file_key}_{row_idx}_{col_idx}"
+                    if dpg.does_item_exist(cell_widget):
+                        cell_value = dpg.get_value(cell_widget).strip()
+                        row_data.append(cell_value)
+                    else:
+                        row_data.append("")
+                except Exception as e:
+                    self.log_message(f"Error collecting cell {row_idx},{col_idx}: {str(e)}", "warning")
+                    row_data.append("")
+        
+            rows_data.append(row_data)
+    
+        # Convert to CSV string
+        output = io.StringIO()
+        csv_writer = csv.writer(output)
+        for row in rows_data:
+            csv_writer.writerow(row)
+    
+        return output.getvalue()
 
     def save_and_close_file(self, file_key):
         """Save and close file"""
         self.save_file(file_key)
         self.close_file_form(file_key)
 
+     # Replace the close_file_form method
     def close_file_form(self, file_key):
         """Close file form"""
         if file_key in self.active_forms:
             form_info = self.active_forms[file_key]
             dpg.delete_item(form_info["window"])
             del self.active_forms[file_key]
+
+        # Clean up form data
+        if file_key in self.form_data:
+            del self.form_data[file_key]
+
 
     def toggle_auto_scroll(self, sender, app_data):
             """Toggle auto-scroll for console"""
