@@ -1,118 +1,136 @@
 #!/bin/bash
-
 set -e
 
-# Step 1: Get absolute path to ingestion_gui.py
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PYTHON_SCRIPT="$SCRIPT_DIR/ingestion_gui.py"
 
-if [ ! -f "$PYTHON_SCRIPT" ]; then
-    echo "❌ ingestion_gui.py not found in $SCRIPT_DIR"
-    exit 1
-fi
+echo "Which GUI(s) would you like to install?"
+echo "1) Standard GUI (ingestion_gui.py)"
+echo "2) Option B GUI (ingestion_gui_option_b.py)"
+echo "3) Both"
+read -rp "Enter choice [1-3]: " choice
 
-# Step 2: Create temporary C file
-LAUNCHER_C=$(mktemp)
+install_gui() {
+    local py_script="$1"
+    local bin_name="$2"
+    local desktop_name="$3"
+    local desktop_file="$HOME/.local/share/applications/${bin_name}.desktop"
+    local icon_source="$SCRIPT_DIR/logo.png"
+    local icon_dest="$HOME/.local/share/icons/${bin_name}.png"
 
-echo "📝 Writing C launcher to: $LAUNCHER_C"
+    if [ ! -f "$SCRIPT_DIR/$py_script" ]; then
+        echo "❌ $py_script not found in $SCRIPT_DIR"
+        return 1
+    fi
 
-# Write the C code to the file (embed the SCRIPT_DIR path)
-cat > "$LAUNCHER_C" <<EOF
+    # Step 1: Create temporary C launcher
+    LAUNCHER_C=$(mktemp)
+    echo "📝 Writing C launcher for $py_script ($bin_name)..."
+
+    cat > "$LAUNCHER_C" <<EOF
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 int main(int argc, char** argv) {
-    // Change to the script directory
     if (chdir("${SCRIPT_DIR}") != 0) {
         perror("❌ Failed to change directory to script dir");
         return 1;
     }
-
-    // Build the command string
-    char command[2048] = "python3 \"ingestion_gui.py\"";
+    char command[2048] = "python3 \\"$py_script\\"";
     for (int i = 1; i < argc; i++) {
         strcat(command, " ");
         strcat(command, argv[i]);
     }
-
     return system(command);
 }
 EOF
 
-# ✅ DEBUG: Show the file contents before compiling
-echo "🔍 C file contents:"
-cat "$LAUNCHER_C"
+    # Step 2: Compile launcher
+    echo "🛠️  Compiling $bin_name..."
+    gcc -x c "$LAUNCHER_C" -o "$bin_name"
+    rm "$LAUNCHER_C"
 
-# Step 3: Try compiling
-echo "🛠️  Compiling..."
-gcc -x c "$LAUNCHER_C" -o shadow_command_center
+    # Step 3: Install binary
+    echo "🔐 Installing binary to /usr/bin/$bin_name (requires sudo)"
+    sudo mv "$bin_name" "/usr/bin/$bin_name"
+    sudo chmod +x "/usr/bin/$bin_name"
 
-# Step 4: Clean up
-rm "$LAUNCHER_C"
+    echo "✅ Installed $bin_name. You can now run: $bin_name"
 
-# Step 5: Move binary to /usr/bin
-echo "🔐 Installing binary to /usr/bin/shadow_command_center (requires sudo)"
-sudo mv shadow_command_center /usr/bin/shadow_command_center
-sudo chmod +x /usr/bin/shadow_command_center
+    # Step 4: Desktop entry
+    echo "📁 Creating desktop entry at: $desktop_file"
+    mkdir -p "$(dirname "$desktop_file")"
 
-echo "✅ Binary installed. You can now run: shadow_command_center"
+    # Copy icon if available
+    if [ -f "$icon_source" ]; then
+        echo "🖼️  Installing icon..."
+        mkdir -p "$(dirname "$icon_dest")"
+        cp "$icon_source" "$icon_dest"
+    else
+        echo "⚠️  No icon found at $icon_source — using default application icon."
+    fi
 
-# Step 6: Create .desktop entry
-DESKTOP_FILE="$HOME/.local/share/applications/shadow-command-center.desktop"
-ICON_SOURCE="$SCRIPT_DIR/logo.png"   # Updated icon file to logo.png
-ICON_DEST="$HOME/.local/share/icons/shadow-command-center.png"
-
-echo "📁 Creating desktop entry at: $DESKTOP_FILE"
-mkdir -p "$(dirname "$DESKTOP_FILE")"
-
-# Copy icon if it exists
-if [ -f "$ICON_SOURCE" ]; then
-    echo "🖼️  Installing icon..."
-    mkdir -p "$(dirname "$ICON_DEST")"
-    cp "$ICON_SOURCE" "$ICON_DEST"
-else
-    echo "⚠️  No icon found at $ICON_SOURCE — using default application icon."
-fi
-
-# Write desktop entry
-cat > "$DESKTOP_FILE" <<EOF
+    # Write .desktop file
+    cat > "$desktop_file" <<EOF
 [Desktop Entry]
-Name=Shadow Command Center
-Exec=shadow_command_center
-Icon=shadow-command-center
+Name=$desktop_name
+Exec=$bin_name
+Icon=${bin_name}
 Terminal=false
 Type=Application
 Categories=Utility;
 StartupNotify=true
 EOF
 
-chmod +x "$DESKTOP_FILE"
+    chmod +x "$desktop_file"
 
-# Optional: update application menu database (some desktops require it)
-if command -v update-desktop-database &> /dev/null; then
-    update-desktop-database "$HOME/.local/share/applications" || true
-fi
+    # Update desktop DB if available
+    if command -v update-desktop-database &> /dev/null; then
+        update-desktop-database "$HOME/.local/share/applications" || true
+    fi
 
-echo "✅ Desktop entry installed. You can now search for 'Shadow Command Center' in your app menu. Installation Processes Continue"
+    echo "✅ Desktop entry installed: $desktop_name"
+}
 
+# Handle installation choice
+case $choice in
+    1)
+        install_gui "ingestion_gui.py" "shadow_command_center" "Shadow Command Center"
+        ;;
+    2)
+        install_gui "ingestion_gui_option_b.py" "shadow_command_center_minimised" "Shadow Command Center (Minimised)"
+        ;;
+    3)
+        install_gui "ingestion_gui.py" "shadow_command_center" "Shadow Command Center"
+        install_gui "ingestion_gui_option_b.py" "shadow_command_center_minimised" "Shadow Command Center (Minimised)"
+        ;;
+    *)
+        echo "❌ Invalid choice"
+        exit 1
+        ;;
+esac
+
+# Dependency checks
 echo "🔍 Checking for Python 3..."
 if ! command -v python3 &> /dev/null; then
-  echo "📦 Installing python3..."
-  sudo apt update
-  sudo apt install -y python3
+    echo "📦 Installing python3..."
+    sudo apt update
+    sudo apt install -y python3
 else
-  echo "✅ python3 is already installed."
+    echo "✅ python3 is already installed."
 fi
 
 echo "🔍 Checking for pip3..."
 if ! command -v pip3 &> /dev/null; then
-  echo "📦 Installing python3-pip..."
-  sudo apt install -y python3-pip
+    echo "📦 Installing python3-pip..."
+    sudo apt install -y python3-pip
 else
-  echo "✅ pip3 is already installed."
+    echo "✅ pip3 is already installed."
 fi
 
+# Final bootstrap
 echo "🚀 Running Python bootstrap script..."
-python3 bootstrap_shadowserver_environment.py
+python3 "$SCRIPT_DIR/bootstrap_shadowserver_environment.py"
+
+echo "🎉 Installation complete!"
