@@ -475,6 +475,7 @@ async def main_email_ingestion():
 
     imap = None
     try:
+        imaplib._MAXLINE = 50_000_000
         imap = imaplib.IMAP4_SSL(mail_server, ssl_context=context)
         print("Connection established successfully.")
         imap.login(email_address, password)
